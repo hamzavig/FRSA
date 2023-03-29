@@ -1,0 +1,6 @@
+Package: FRSA
+Type: Package
+Title: Financial Risk Scenario Analysis
+Version: 0.0.1
+Encoding: UTF-8
+RoxygenNote: 7.2.3
