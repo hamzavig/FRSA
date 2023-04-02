@@ -1,0 +1,3 @@
+﻿rfType,label,referenceDate,tenor.1,rate.1,tenor.2,rate.2,tenor.3,rate.3,tenor.4,rate.4,tenor.5,rate.5
+YieldCurve,YC_Default,2017-01-01,1Y,0.005,2Y,0.01,5Y,0.02,10Y,0.03,15Y,0.04
+YieldCurve,YC_Shifted,2017-01-01,1Y,0.005,2Y,0.01,5Y,0.02,10Y,0.03,15Y,0.04

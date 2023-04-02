@@ -4,3 +4,6 @@ Title: Financial Risk Scenario Analysis
 Version: 0.0.1
 Encoding: UTF-8
 RoxygenNote: 7.2.3
+Depends: 
+    R (>= 2.10)
+LazyData: true
