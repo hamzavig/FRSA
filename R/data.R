@@ -17,7 +17,6 @@
 #'   \item{\code{rate.5}}{double rate.n defines the interest rate for given tenor.n.} 
 #'}
 #' @source \url{https://github.com/hamzavig/FRSA/}
-#' @export
 "yieldCurves"
 
 #' @title annuities
@@ -62,5 +61,4 @@
 #'   \item{\code{contrStruc.referenceRole}}{character tbd} 
 #'}
 #' @source \url{https://www.actusfrf.org/dictionary/}
-#' @export
 "annuities"
