@@ -24,12 +24,16 @@ contractFile2dataframe <- function(cdfn, sep = ",") {
   return(df)
 }
 
+#' @export
+#'
 operationFile2dataframe <- function(odfn, sep = ",") {
   df <- utils::read.csv(odfn)
   df[is.na(df)] <- "NULL"
   return(df)
 }
 
+#' @export
+#'
 riskFile2dataframe <- function(fname, sep = ","){
   # this read.csv works for csv with no dayCountConvention column. Warning
   df = utils::read.csv(fname)
@@ -48,6 +52,8 @@ riskFile2dataframe <- function(fname, sep = ","){
 #    -- improved version df2contracts_list()
 # ************************************************
 
+#' @export
+#'
 contracts_df2list<- function(contracts_df){
   nonTermCols <- c("description","contrStrucObj.marketObjectCode",
                    "contrStruc.referenceType", "contrStruc.referenceRole")
@@ -71,6 +77,9 @@ contracts_df2list<- function(contracts_df){
 #  Split df: terms, pattern, args (once)
 #  for each row: createOperations(terms, pattern, args, irow)
 # ************************************************************
+
+#' @export
+#'
 operations_df2list <- function(operations_df) {
   nonTermCols <- c("repetition", "frequency",	"times", "inverted", "description")
   terms_df <- operations_df[!names(operations_df) %in% nonTermCols]
@@ -133,6 +142,8 @@ operations_df2list <- function(operations_df) {
 #   all riskFactors are YieldCurves for now
 # ************************************************
 
+#' @export
+#'
 riskFactors_df2list <- function(riskFactors_df){
   
   rfList <- list()
@@ -179,6 +190,9 @@ riskFactors_df2list <- function(riskFactors_df){
 #    if isStructured: insertLegs
 #    insertTerms ( both simple and structured cases )
 # ************************************************
+
+#' @export
+#'
 datarow2Contract<- function(terms_df, legs_df,irow){
   contractTypeName <- longName(tolower(terms_df$contractType[irow]))
   contract <- CT(contractTypeName)
@@ -202,7 +216,8 @@ datarow2Contract<- function(terms_df, legs_df,irow){
   return(contract)
 }
 
-
+#' @export
+#'
 datarow2Operation <- function(terms_df, pattern, args, irow){
   contractTypeName <- terms_df$contractType[irow]
   operation <- FEMSCT(contractTypeName)
