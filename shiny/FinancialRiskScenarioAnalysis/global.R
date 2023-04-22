@@ -13,14 +13,14 @@ library(dplyr)
 library(lubridate)
 library(timeDate)
 
-devtools::install_github('hamzavig/FRSA')
-library('FRSA')
+devtools::install_github("hamzavig/FRSA")
+library("FRSA")
 
 
 css <- "
 .nowrap {
   white-space: nowrap;
-}  
+}
 
 #tableDoc.shiny-html-output.shiny-bound-output .container {
   margin-left: 0px !important;
@@ -54,11 +54,6 @@ div[data-value='Institution'] {
 #dcPlot {
   margin-top: 30px !important;
 }
-
-#inst_add {
-  margin-top: 29px !important;
-  height: 40px !important;
-} 
 
 #inst_add_col {
   padding-left: 0px !important;

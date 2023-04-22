@@ -260,6 +260,67 @@ function(input, output, session) {
   )
   
   
+  
+  # Institutions -------------------------------------
+  
+  institution_vec <- reactiveVal(c())
+  institution_ls <- reactiveVal(list())
+  market_obj_vec <- reactiveVal(c('None'))
+  
+  
+  observeEvent(input$inst_add, {
+    
+    
+    if (input$inst_name %in% institution_vec()) {
+      output$inst_warning <- renderUI({
+        tags$div("Institution already exists!", style = "color: red;")
+      })
+    } else {
+      output$inst_warning <- NULL
+      new_inst <- input$inst_name
+      temp_inst_vec <- c(institution_vec(),new_inst)
+      institution_vec(temp_inst_vec)
+      
+      inst_tree <- createInstitution(new_inst)
+      
+      inst_list <- list(
+        tree = inst_tree
+      )
+      
+      inst_ls <- institution_ls()
+      inst_ls <- append(inst_ls, list(inst_list))
+      institution_ls(inst_ls)
+    }
+    
+  })
+  
+  
+  output$inst_structure <- renderPrint({
+    inst_id <- which(institution_vec() == input$inst_view)
+    if (inst_id > 0){
+      print(institution_ls()[[inst_id]]$tree)
+    }
+  })
+  
+  
+  # Update ropdown choices when reactive values object changes for selection of institution view
+  observe({
+    updateSelectInput(session, inputId = "inst_view", choices = institution_vec())
+  })
+  
+  # Update dropdown choices when reactive values object changes for applicable market objects
+  observe({
+    updateSelectInput(session, inputId = "ct_moc", choices = market_obj_vec())
+  })
+  
+  # Update dropdown choices for applicable market objects
+  observe({
+    yc_df <- yieldCurve_df()
+    yc_labels <- yc_df$label
+    new_labels <- c('None', yc_labels)
+    market_obj_vec(new_labels)
+  })
+  
   #---------------------------------------------------
   #---------------------Downloads---------------------
   #---------------------------------------------------

@@ -4,252 +4,266 @@
 #
 
 fluidPage(
-  
-  theme = shinytheme('readable'),
-  
-  img(src = "actus-logo.png", height = 100, width = 220,
-      style="float:right; padding-right:25px"),
-  img(src="soe.png",height = 138, width = 239),
-  
+  theme = shinytheme("readable"),
+  img(
+    src = "actus-logo.png", height = 100, width = 220,
+    style = "float:right; padding-right:25px"
+  ),
+  img(src = "soe.png", height = 138, width = 239),
   tags$head(
     tags$style(HTML(css))
   ),
-  
-  navbarPage('Financial Risk Scenario Analysis',
-             fluid = TRUE,
-         
-             tabPanel('Scenario Analysis', id = 'scenarioAnalysis',
-      
-                      tabsetPanel(
-                        
-                        tabPanel('Market', id = 'market',
-                                 sidebarLayout(
-                                   
-                                   sidebarPanel(
-                                     width = 3,
-                                     
-                                     fileInput('rf_file', 'Upload Risk Factors', 
-                                               accept = c('text/csv',
-                                                          'text/comma-separated-values,text/plain',
-                                                          '.csv'),
-                                               placeholder = 'No file selected.'
-                                               ),
-                                     p('There are predefined Yield Curves and Default Curves datasets in the ', 
-                                       strong('downloads'), 
-                                       ' section. You can upload them as they are or extend the downloaded files with your own riskfactors.'),
-                                     
-                                     actionButton('rf_import', 'Import Risk Factor', width = '100%'),
-                                     
-                                     p('- or -'),
-                                     br(),
-                                     
-                                     selectInput('rf_type', 'Risk Factor Type',
-                                                 choices = c('YieldCurve',
-                                                             'DefaultCurve')
-                                     ),
-                                     textInput('rf_label', 'Label', placeholder = 'YC_CH_AAA'),
-                                     dateInput('rf_ref_date', 'Reference Date', value = Sys.Date(), format = 'yyyy-mm-dd'),
-                                     
-                                     fluidRow(id = 'rf_tenors',
-                                       column(3, textInput('rf_tenor1', label = 'Tenor 1', placeholder = '1Y')),
-                                       column(3, textInput('rf_tenor2', label = 'Tenor 2', placeholder = '2Y')),
-                                       column(3, textInput('rf_tenor3', label = 'Tenor 3', placeholder = '5Y')),
-                                       column(3, textInput('rf_tenor4', label = 'Tenor 4', placeholder = '10Y'))
-                                     ),
-                                     
-                                     fluidRow(id = 'rf_rates',
-                                       column(3, numericInput('rf_rate1', label = 'Rate 1', value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
-                                       column(3, numericInput('rf_rate2', label = 'Rate 2', value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
-                                       column(3, numericInput('rf_rate3', label = 'Rate 3', value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
-                                       column(3, numericInput('rf_rate4', label = 'Rate 4', value = 0.01, step = 0.01, min = 0.01, max = 1.0))
-                                     ),
-                                     
-                                     br(),
-                                     
-                                     actionButton('rf_add', 'Add Risk Factor', width = '100%')
-                                     
-                                   ),
-                                   
-                                   mainPanel(
-                                     width = 9,
-                                     tabsetPanel(type = 'tabs',
-                                                 
-                                                 tabPanel(
-                                                   'Yield Curves',
-                                                   br(),
-                                                   DTOutput('yieldCurve_df'),
-                                                   br(),
-                                                   actionButton('yc_duplicate', 'Duplicate'),
-                                                   actionButton('yc_remove', 'Remove'),
-                                                   div(downloadButton('downloadYC', 'Download'), style = 'float:right'),
-                                                   br(),
-                                                   plotOutput("ycPlot"),
-                                                   verbatimTextOutput('ycD')
-                                                 ),
-                                                 
-                                                 tabPanel(
-                                                   'Default Curves',
-                                                   br(),
-                                                   DTOutput('defaultCurve_df'),
-                                                   br(),
-                                                   actionButton('dc_duplicate', 'Duplicate'),
-                                                   actionButton('dc_remove', 'Remove'),
-                                                   div(downloadButton('downloadDC', 'Download'), style = 'float:right'),
-                                                   br(),
-                                                   plotOutput("dcPlot")
-                                                 )
-                                     )
-                                     
-                                   )
-                                   
-                                 )
-                        ),
-                        
-                        tabPanel('Institution', id = "institution",
-                                 
-                                 sidebarLayout(
-                                   
-                                   sidebarPanel(
-                                     width = 3,
-                                     textInput('inst_name', 'Name Institution', placeholder = 'Bank_A', width = '100%'),
-                                     actionButton('inst_add_1', 'Create', width = '100%')
-                                   ),
-                                   mainPanel(
-                                     
-                                   )
-                                 ),
-                                 conditionalPanel(
-                                   condition = 'input.inst_name > "" && input.inst_add_1 > 0',
-                                   
-                                 
-                                 sidebarLayout(
-                                   
-                                   sidebarPanel(
-                                     width = 3,
-                                     
-                                     fileInput('ct_file', 'Upload Financial Contracts', 
-                                               accept = c('text/csv',
-                                                          'text/comma-separated-values,text/plain',
-                                                          '.csv'),
-                                               placeholder = 'No file selected.'
-                                     ),
-                                     p('There are predefined Financial Contract datasets in the ', 
-                                       strong('downloads'), 
-                                       ' section. You can upload them as they are or extend the downloaded files with your own contracts.'),
-                                     
-                                     actionButton('ct_import', 'Import Financial Contracts', width = '100%'),
-                                     
-                                     p('- or -'),
-                                     br(),
-                                     
-                                     selectInput('ct_type', 'Contract Type',
-                                                 choices = c('ANN',
-                                                             'PAM',
-                                                             'Investments',
-                                                             'OperationalCF')
-                                     ),
-                                     
-                                     conditionalPanel(
-                                       condition = 'input.ct_type == "ANN" || input.ct_type == "PAM"',
-                                       fluidRow(
-                                         
-                                         column(
-                                           width = 6,
-                                           selectInput('ct_role', 'Contract Role',
-                                                       choices = c('RPA',
-                                                                   'RPL')
-                                           ),
-                                           selectInput('ct_dcc', 'Day Count Convention',
-                                                       choices = c('30E60',
-                                                                   'B252',
-                                                                   'A360',
-                                                                   'A365')
-                                           ),
-                                           numericInput('ct_nom_prc', 'Nominal Principal', value = 1000, step = 100, min = 100),
-                                           numericInput('ct_nom_rate', 'Nominal Interest Rate', value = 0.01, step = 0.001, min = 0.001, max = 1.0)
-                                         ),
-                                         column(
-                                           width = 6,
-                                           textInput('ct_id', 'Contract Identifier', placeholder = 'CTR0001'),
-                                           dateInput('ct_ied', 'Initial Exchange Date', value = Sys.Date(), format = 'yyyy-mm-dd'),
-                                           dateInput('ct_mtdt', 'Maturity Date', value = Sys.Date(), format = 'yyyy-mm-dd'),
-                                           selectInput('ct_currency', 'Currency',
-                                                       choices = c('CHF',
-                                                                   'USD',
-                                                                   'EUR')
-                                           )
-                                         )
-                                       
-                                       ),
-                                      
-                                     ),
-                                     
-                                     conditionalPanel(
-                                       condition = 'input.ct_type == "Investments" || input.ct_type == "OperationalCF"',
-                                       p('Investments / OpCF fields')
-                                     ),
-                                     
-                                     br(),
-                                     
-                                     actionButton('ct_add', 'Add Financial Contract', width = '100%')
-                                     
-                                   ),
-                                   
-                                   mainPanel(
-                                     width = 9,
-                                     tabsetPanel(id = 'institutions',
-                                                 
-                                                 tabPanel(
-                                                   'Assets'
-                                                 ),
-                                                 tabPanel(
-                                                   'Liabilities'
-                                                 )
-                                     )
-                                     
-                                   )
-                                   
-                                 )
-                                 )
-                          
-                        ),
-                        
-                        tabPanel('Risk Analysis'
-                          
+  navbarPage("Financial Risk Scenario Analysis",
+    fluid = TRUE,
+    tabPanel("Scenario Analysis",
+      id = "scenarioAnalysis",
+      tabsetPanel(
+        tabPanel("Market",
+          id = "market",
+          sidebarLayout(
+            sidebarPanel(
+              width = 3,
+              fileInput("rf_file", "Upload Risk Factors",
+                accept = c(
+                  "text/csv",
+                  "text/comma-separated-values,text/plain",
+                  ".csv"
+                ),
+                placeholder = "No file selected."
+              ),
+              p(
+                "There are predefined Yield Curves and Default Curves datasets in the ",
+                strong("downloads"),
+                " section. You can upload them as they are or extend the downloaded files with your own riskfactors."
+              ),
+              actionButton("rf_import", "Import Risk Factor", width = "100%"),
+              p("- or -"),
+              br(),
+              selectInput("rf_type", "Risk Factor Type",
+                choices = c(
+                  "YieldCurve",
+                  "DefaultCurve"
+                )
+              ),
+              textInput("rf_label", "Label", placeholder = "YC_CH_AAA"),
+              dateInput("rf_ref_date", "Reference Date", value = Sys.Date(), format = "yyyy-mm-dd"),
+              fluidRow(
+                id = "rf_tenors",
+                column(3, textInput("rf_tenor1", label = "Tenor 1", placeholder = "1Y")),
+                column(3, textInput("rf_tenor2", label = "Tenor 2", placeholder = "2Y")),
+                column(3, textInput("rf_tenor3", label = "Tenor 3", placeholder = "5Y")),
+                column(3, textInput("rf_tenor4", label = "Tenor 4", placeholder = "10Y"))
+              ),
+              fluidRow(
+                id = "rf_rates",
+                column(3, numericInput("rf_rate1", label = "Rate 1", value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
+                column(3, numericInput("rf_rate2", label = "Rate 2", value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
+                column(3, numericInput("rf_rate3", label = "Rate 3", value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
+                column(3, numericInput("rf_rate4", label = "Rate 4", value = 0.01, step = 0.01, min = 0.01, max = 1.0))
+              ),
+              br(),
+              actionButton("rf_add", "Add Risk Factor", width = "100%")
+            ),
+            mainPanel(
+              width = 9,
+              tabsetPanel(
+                tabPanel(
+                  "Yield Curves",
+                  br(),
+                  DTOutput("yieldCurve_df"),
+                  br(),
+                  actionButton("yc_duplicate", "Duplicate"),
+                  actionButton("yc_remove", "Remove"),
+                  div(downloadButton("downloadYC", "Download"), style = "float:right"),
+                  br(),
+                  plotOutput("ycPlot"),
+                  verbatimTextOutput("ycD")
+                ),
+                tabPanel(
+                  "Default Curves",
+                  br(),
+                  DTOutput("defaultCurve_df"),
+                  br(),
+                  actionButton("dc_duplicate", "Duplicate"),
+                  actionButton("dc_remove", "Remove"),
+                  div(downloadButton("downloadDC", "Download"), style = "float:right"),
+                  br(),
+                  plotOutput("dcPlot")
+                )
+              )
+            )
+          )
+        ),
+        tabPanel("Institution",
+          id = "institution",
+          sidebarLayout(
+            sidebarPanel(
+              width = 3,
+              textInput("inst_name", "Name Institution", placeholder = "Bank_A", width = "100%"),
+              uiOutput('inst_warning'),
+              actionButton("inst_add", "Create", width = "100%")
+            ),
+            mainPanel(
+              selectInput(inputId = "inst_view", label = "Select Institution:", choices = NULL)
+            )
+          ),
+          conditionalPanel(
+            condition = 'input.inst_add > 0',
+            sidebarLayout(
+              sidebarPanel(
+                width = 3,
+                fileInput("ct_file", "Upload Financial Contracts",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv"
+                  ),
+                  placeholder = "No file selected."
+                ),
+                p(
+                  "There are predefined Financial Contract datasets in the ",
+                  strong("downloads"),
+                  " section. You can upload them as they are or extend the downloaded files with your own contracts."
+                ),
+                actionButton("ct_import", "Import Financial Contracts", width = "100%"),
+                p("- or -", style = "text-align: center;"),
+                br(),
+                selectInput("ct_type", "Contract Type",
+                  choices = c(
+                    "ANN",
+                    "PAM",
+                    "Investments",
+                    "OperationalCF"
+                  )
+                ),
+                conditionalPanel(
+                  condition = 'input.ct_type == "ANN" || input.ct_type == "PAM"',
+                  fluidRow(
+                    column(
+                      width = 6,
+                      selectInput("ct_role", "Contract Role",
+                        choices = c(
+                          "RPA",
+                          "RPL"
                         )
-                        
+                      ),
+                      selectInput("ct_dcc", "Day Count Convention",
+                        choices = c(
+                          "30E60",
+                          "B252",
+                          "A360",
+                          "A365"
+                        )
+                      ),
+                      numericInput("ct_nom_prc", "Nominal Principal", value = 1000, step = 100, min = 100),
+                      numericInput("ct_nom_rate", "Nominal Interest Rate", value = 0.01, step = 0.001, min = 0.001, max = 1.0)
+                    ),
+                    column(
+                      width = 6,
+                      textInput("ct_id", "Contract Identifier", placeholder = "CTR0001"),
+                      dateInput("ct_ied", "Initial Exchange Date", value = Sys.Date(), format = "yyyy-mm-dd"),
+                      dateInput("ct_mtdt", "Maturity Date", value = Sys.Date(), format = "yyyy-mm-dd"),
+                      selectInput("ct_currency", "Currency",
+                        choices = c(
+                          "CHF",
+                          "USD",
+                          "EUR"
+                        )
                       )
-             ),
-             
-             tabPanel('Downloads', id = 'downloads',
-                      fluidRow(column(width = 3,
-                                      selectInput('dataset',
-                                                  'Choose a dataset:',
-                                                  choices = c('annuities', 'yieldCurves')
-                                                  ),
-                                      
-                                      downloadButton('downloadData', 'Download')
-                                      
-                              ),
-                              
-                              column(width = 9,
-                                     tabsetPanel(
-                                       tabPanel('Data',
-                                                br(),
-                                                DTOutput('table')
-                                       ),
-                                       tabPanel('Description',
-                                                br(),
-                                                htmlOutput('tableDoc')
-                                       )
-                                     )
-                                     
-                              )
+                    )
+                  ),
+                  fluidRow(
+                    column(
+                      width = 12,
+                      br(),
+                      actionButton("rateResetToggle", "Rate Reset", icon = icon("plus"), width = "100%"),
+                    )
+                  ),
+                  conditionalPanel(
+                    condition = "input.rateResetToggle % 2 == 1",
+                    toggle = TRUE,
+                    fluidRow(
+                      column(
+                        width = 12,
+                        br(),
+                        selectInput("ct_moc", "Market Object Code of Rate Reset",
+                          choices = NULL
+                        )
                       )
-             ),
-             
-             tabPanel('Instructions')
-    
-  ) # close navbarPage 
-  
+                    )
+                  )
+                ),
+                conditionalPanel(
+                  condition = 'input.ct_type == "Investments" || input.ct_type == "OperationalCF"',
+                  p("Investments / OpCF fields")
+                ),
+                br(),
+                actionButton("ct_add", "Add Financial Contract", width = "100%")
+              ),
+              mainPanel(
+                width = 9,
+                tabsetPanel(
+                  id = "institutions",
+                  tabPanel(
+                    "Structure",
+                    br(),
+                    fluidRow(
+                      column(
+                        width = 6,
+                        verbatimTextOutput('inst_structure')
+                      ),
+                      column(
+                        width = 6,
+                        p('manage')
+                      )
+                    )
+                    
+                  ),
+                  tabPanel(
+                    "Assets"
+                  ),
+                  tabPanel(
+                    "Liabilities"
+                  ),
+                  tabPanel(
+                    "Market"
+                  )
+                )
+              )
+            )
+          )
+        ),
+        tabPanel("Risk Analysis")
+      )
+    ),
+    tabPanel("Downloads",
+      id = "downloads",
+      fluidRow(
+        column(
+          width = 3,
+          selectInput("dataset",
+            "Choose a dataset:",
+            choices = c("annuities", "yieldCurves")
+          ),
+          downloadButton("downloadData", "Download")
+        ),
+        column(
+          width = 9,
+          tabsetPanel(
+            tabPanel(
+              "Data",
+              br(),
+              DTOutput("table")
+            ),
+            tabPanel(
+              "Description",
+              br(),
+              htmlOutput("tableDoc")
+            )
+          )
+        )
+      )
+    ),
+    tabPanel("Instructions")
+  ) # close navbarPage
 ) # close fluidPage
