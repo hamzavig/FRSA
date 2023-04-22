@@ -12,8 +12,6 @@ library(shinyjs)
 library(dplyr)
 library(lubridate)
 library(timeDate)
-
-devtools::install_github("hamzavig/FRSA")
 library("FRSA")
 
 
