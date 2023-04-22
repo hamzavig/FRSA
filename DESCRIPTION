@@ -5,7 +5,16 @@ Version: 0.0.1
 Encoding: UTF-8
 RoxygenNote: 7.2.3
 Depends: 
-    R (>= 2.10)
+    R (>= 2.10),
+    timeSeries,
+    zoo,
+    httr,
+    lubridate,
+    fmdates,
+    jsonlite,
+    readxl,
+    data.tree,
+    R6,
 LazyData: true
 Collate: 
     'AnalysisDate.R'
