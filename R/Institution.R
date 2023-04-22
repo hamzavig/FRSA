@@ -45,29 +45,14 @@ createInstitution <- function(name, ...) {
   institution$Assets$AddChild("LongTerm")
   institution$Assets$AddChild("FixedAssets")
   
-  institution$Assets$ShortTerm$AddChild("LiquidAssets")
-  institution$Assets$LongTerm$AddChild("Loans")
-  institution$Assets$LongTerm$AddChild("Mortgages")
-  
   # Create underlying nodes for "Liabilities"
   institution$Liabilities$AddChild("ShortTerm")
   institution$Liabilities$AddChild("LongTerm")
   institution$Liabilities$AddChild("Equity")
   
-  institution$Liabilities$ShortTerm$AddChild("Deposits")
-  institution$Liabilities$LongTerm$AddChild("Loans")
-  
   # Create underlying nodes for "Operations"
   institution$Operations$AddChild("Revenues")
   institution$Operations$AddChild("Expenses")
-  
-  institution$Operations$Revenues$AddChild("Commissions")
-  institution$Operations$Revenues$AddChild("Rent")
-  institution$Operations$Revenues$AddChild("Other")
-  
-  institution$Operations$Expenses$AddChild("Salaries")
-  institution$Operations$Expenses$AddChild("Rent")
-  institution$Operations$Expenses$AddChild("Other")
   
   return(institution)
 }
