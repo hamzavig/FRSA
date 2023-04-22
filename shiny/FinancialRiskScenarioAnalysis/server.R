@@ -265,11 +265,16 @@ function(input, output, session) {
   
   institution_vec <- reactiveVal(c())
   institution_ls <- reactiveVal(list())
+  
+  inst_top_level <- reactiveVal(c())
+  inst_account_type <- reactiveVal(c('None'))
+  inst_account <- reactiveVal(c('None'))
+  inst_sub_account <- reactiveVal(c('None'))
+  
   market_obj_vec <- reactiveVal(c('None'))
   
   
   observeEvent(input$inst_add, {
-    
     
     if (input$inst_name %in% institution_vec()) {
       output$inst_warning <- renderUI({
@@ -297,33 +302,69 @@ function(input, output, session) {
   
   output$inst_structure <- renderPrint({
     inst_id <- which(institution_vec() == input$inst_view)
-    if (inst_id > 0){
+    if (length(inst_id) > 0){
       print(institution_ls()[[inst_id]]$tree)
     }
   })
   
   
-  # Update ropdown choices when reactive values object changes for selection of institution view
+  # Update dropdown choices for top level account selection
+  observe({
+    inst_id <- which(institution_vec() == input$inst_view)
+    if (length(inst_id) > 0){
+      inst <- institution_ls()[[inst_id]]$tree
+      top_level_accounts <- names(inst$children)
+      inst_top_level(top_level_accounts)
+      updateSelectInput(session, inputId = "inst_top_level_account", choices = inst_top_level())
+    }
+  })
+  
+  # Update dropdown choices for account type selection
+  observe({
+    inst_id <- which(institution_vec() == input$inst_view)
+    if (!is.null(input$inst_top_level_account) && input$inst_top_level_account != ""){
+      inst <- institution_ls()[[inst_id]]$tree
+      top_level_account <- input$inst_top_level_account
+      parent <- inst[[top_level_account]]
+      account_types <- names(parent$children)
+      inst_account_type(account_types)
+      updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_type())
+    }
+  })
+  
+  # Update dropdown choices for account selection
+  observe({
+    inst_id <- which(institution_vec() == input$inst_view)
+
+    updateSelectInput(session, inputId = "inst_account", choices = inst_account())
+  })
+  
+  # Update dropdown choices for sub-account selection
+  observe({
+    updateSelectInput(session, inputId = "inst_sub_account", choices = inst_sub_account())
+  })
+  
+  # Update dropdown choices when reactive values object changes for selection of institution view
   observe({
     updateSelectInput(session, inputId = "inst_view", choices = institution_vec())
   })
   
   # Update dropdown choices when reactive values object changes for applicable market objects
   observe({
-    updateSelectInput(session, inputId = "ct_moc", choices = market_obj_vec())
-  })
-  
-  # Update dropdown choices for applicable market objects
-  observe({
     yc_df <- yieldCurve_df()
     yc_labels <- yc_df$label
     new_labels <- c('None', yc_labels)
     market_obj_vec(new_labels)
+    updateSelectInput(session, inputId = "ct_moc", choices = market_obj_vec())
   })
+  
+  
   
   #---------------------------------------------------
   #---------------------Downloads---------------------
   #---------------------------------------------------
+  
+  # Dataset Download ---------------------------------
   
   # Reactive value for selected dataset
   datasetInput <- reactive({
@@ -358,5 +399,25 @@ function(input, output, session) {
       write.csv(datasetInput(), file, row.names = FALSE)
     }
   )
+  
+  
+  #---------------------------------------------------
+  #----------------------Closure----------------------
+  #---------------------------------------------------
+  
+  # Close App ----------------------------------------
+  
+  # Define function to trigger when close button is clicked
+  observeEvent(input$close, {
+    removeModal()  # Hide the confirmation dialog
+    session$close()  # Close the Shiny session
+  })
+  
+  # Define function to trigger when download button is clicked
+  output$downloadAll <- downloadHandler(
+    # Define download logic here
+  )
+  
+  
   
 }

@@ -14,7 +14,7 @@ library(lubridate)
 library(timeDate)
 library("FRSA")
 
-
+# Define object styling using custom CSS
 css <- "
 .nowrap {
   white-space: nowrap;

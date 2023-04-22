@@ -10,9 +10,12 @@ fluidPage(
     style = "float:right; padding-right:25px"
   ),
   img(src = "soe.png", height = 138, width = 239),
+  
+  # Link custom CSS styling
   tags$head(
     tags$style(HTML(css))
   ),
+
   navbarPage("Financial Risk Scenario Analysis",
     fluid = TRUE,
     tabPanel("Scenario Analysis",
@@ -128,6 +131,10 @@ fluidPage(
                 actionButton("ct_import", "Import Financial Contracts", width = "100%"),
                 p("- or -", style = "text-align: center;"),
                 br(),
+                selectInput("inst_top_level_account", "Top Level Account", choices = NULL),
+                selectInput("inst_account_type", "Account Type", choices = NULL),
+                selectInput("inst_account", "Account", choices = NULL),
+                selectInput("inst_sub_account", "Sub-Account", choices = NULL),
                 selectInput("ct_type", "Contract Type",
                   choices = c(
                     "ANN",
