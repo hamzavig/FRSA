@@ -268,8 +268,8 @@ function(input, output, session) {
   
   inst_top_level <- reactiveVal(c())
   inst_account_type <- reactiveVal(c('None'))
-  inst_account <- reactiveVal(c('None'))
-  inst_sub_account <- reactiveVal(c('None'))
+  inst_account <- reactiveVal(c())
+  inst_sub_account <- reactiveVal(c())
   
   market_obj_vec <- reactiveVal(c('None'))
   
@@ -308,39 +308,52 @@ function(input, output, session) {
   })
   
   
-  # Update dropdown choices for top level account selection
   observe({
     inst_id <- which(institution_vec() == input$inst_view)
-    if (length(inst_id) > 0){
+    if(length(inst_id) > 0){
       inst <- institution_ls()[[inst_id]]$tree
       top_level_accounts <- names(inst$children)
       inst_top_level(top_level_accounts)
-      updateSelectInput(session, inputId = "inst_top_level_account", choices = inst_top_level())
+      
+      
+      if(!is.null(input$inst_top_level_account) && input$inst_top_level_account != ""){
+        top_level_account <- input$inst_top_level_account
+        top_level_object <- inst[[top_level_account]]
+        if(!top_level_object$isLeaf){
+          output$accunt_type_input <- renderUI({
+            selectInput("inst_account_type", "Account Type", choices = NULL)
+          })
+          account_types <- names(top_level_object$children)
+          account_types <- c(account_types, 'None')
+          inst_account_type(account_types)
+          
+          
+          if(!is.null(input$inst_account_type) && input$inst_account_type != "" && input$inst_account_type != 'None'){
+            account_type <- input$inst_account_type
+            account_type_object <- top_level_object[[account_type]]
+            if(!account_type_object$isLeaf){
+              output$account_input <- renderUI({
+                selectInput("inst_account", "Account", choices = NULL)
+              })
+              accounts <- names(account_type_object$children)
+              accounts <- c(accounts, 'None')
+              inst_account(accounts)
+              
+              
+            }
+          }
+          
+        }
+      }
     }
   })
   
-  # Update dropdown choices for account type selection
-  observe({
-    inst_id <- which(institution_vec() == input$inst_view)
-    if (!is.null(input$inst_top_level_account) && input$inst_top_level_account != ""){
-      inst <- institution_ls()[[inst_id]]$tree
-      top_level_account <- input$inst_top_level_account
-      parent <- inst[[top_level_account]]
-      account_types <- names(parent$children)
-      inst_account_type(account_types)
-      updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_type())
-    }
-  })
-  
-  # Update dropdown choices for account selection
-  observe({
-    inst_id <- which(institution_vec() == input$inst_view)
-
-    updateSelectInput(session, inputId = "inst_account", choices = inst_account())
-  })
   
   # Update dropdown choices for sub-account selection
   observe({
+    updateSelectInput(session, inputId = "inst_top_level_account", choices = inst_top_level())
+    updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_type())
+    updateSelectInput(session, inputId = "inst_account", choices = inst_account())
     updateSelectInput(session, inputId = "inst_sub_account", choices = inst_sub_account())
   })
   

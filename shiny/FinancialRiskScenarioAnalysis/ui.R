@@ -132,9 +132,9 @@ fluidPage(
                 p("- or -", style = "text-align: center;"),
                 br(),
                 selectInput("inst_top_level_account", "Top Level Account", choices = NULL),
-                selectInput("inst_account_type", "Account Type", choices = NULL),
-                selectInput("inst_account", "Account", choices = NULL),
-                selectInput("inst_sub_account", "Sub-Account", choices = NULL),
+                uiOutput("accunt_type_input"),
+                uiOutput("account_input"),
+                uiOutput("sub_account_input"),
                 selectInput("ct_type", "Contract Type",
                   choices = c(
                     "ANN",
