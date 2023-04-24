@@ -28,37 +28,43 @@ function(input, output, session) {
   
   # Update data frames with file input (bulk function)
   observeEvent(input$rf_import, {
-    filename <- input$rf_file$datapath
-    file_df <- riskFile2dataframe(filename)
-    yc_df <- file_df[file_df$rfType == 'YieldCurve',]
-    dc_df <- file_df[file_df$rfType == 'DefaultCurve',]
     
-    temp_yc_df <- bind_rows(yieldCurve_df(), yc_df)
-    temp_dc_df <- bind_rows(defaultCurve_df(), dc_df)
-    
-    temp_yc_df <- temp_yc_df[!duplicated(temp_yc_df),]
-    temp_dc_df <- temp_dc_df[!duplicated(temp_dc_df),]
-    
-    yc_empty_cols <- apply(temp_yc_df, 2, function(x) all(is.na(x) | x == ""))
-    dc_empty_cols <- apply(temp_dc_df, 2, function(x) all(is.na(x) | x == ""))
-    
-    # Subset the data frame to remove empty columns
-    temp_yc_df <- subset(temp_yc_df, select = !yc_empty_cols)
-    temp_dc_df <- subset(temp_dc_df, select = !dc_empty_cols)
-    
-    yieldCurve_df(temp_yc_df)
-    defaultCurve_df(temp_dc_df)
-    
-    if (nrow(yieldCurve_df()) > 0){
-      new_yc_list <- riskFactors_df2list(temp_yc_df)
-      yieldCurve_ls(new_yc_list)
+    if(is.null(input$rf_file)){
+      output$rf_file_notification <- renderUI({
+        tags$div("Please add a file!", style = 'color: red;')
+      })
+    }else{
+      filename <- input$rf_file$datapath
+      file_df <- riskFile2dataframe(filename)
+      yc_df <- file_df[file_df$rfType == 'YieldCurve',]
+      dc_df <- file_df[file_df$rfType == 'DefaultCurve',]
+      
+      temp_yc_df <- bind_rows(yieldCurve_df(), yc_df)
+      temp_dc_df <- bind_rows(defaultCurve_df(), dc_df)
+      
+      temp_yc_df <- temp_yc_df[!duplicated(temp_yc_df),]
+      temp_dc_df <- temp_dc_df[!duplicated(temp_dc_df),]
+      
+      yc_empty_cols <- apply(temp_yc_df, 2, function(x) all(is.na(x) | x == ""))
+      dc_empty_cols <- apply(temp_dc_df, 2, function(x) all(is.na(x) | x == ""))
+      
+      # Subset the data frame to remove empty columns
+      temp_yc_df <- subset(temp_yc_df, select = !yc_empty_cols)
+      temp_dc_df <- subset(temp_dc_df, select = !dc_empty_cols)
+      
+      yieldCurve_df(temp_yc_df)
+      defaultCurve_df(temp_dc_df)
+      
+      if (nrow(yieldCurve_df()) > 0){
+        new_yc_list <- riskFactors_df2list(temp_yc_df)
+        yieldCurve_ls(new_yc_list)
+      }
+      
+      if (nrow(defaultCurve_df()) > 0){
+        new_dc_list <- riskFactors_df2list(temp_dc_df)
+        defaultCurve_ls(new_dc_list)
+      }
     }
-    
-    if (nrow(defaultCurve_df()) > 0){
-      new_dc_list <- riskFactors_df2list(temp_dc_df)
-      defaultCurve_ls(new_dc_list)
-    }
-    
   })
   
   
@@ -261,21 +267,22 @@ function(input, output, session) {
   
   
   
+  
   # Institutions -------------------------------------
   
   institution_vec <- reactiveVal(c())
   institution_ls <- reactiveVal(list())
-  
+
   current_inst <- reactiveVal()
   
-  inst_account_types <- reactiveVal(c())
-  inst_accounts <- reactiveVal(c('None'))
+  inst_accounts <- reactiveVal(c())
   
   str_nodes <- reactiveVal(c())
   str_node_parents <- reactiveVal(c())
   
   market_obj_vec <- reactiveVal(c('None'))
   
+  # Institution Creation / Deletion ------------------
   
   observeEvent(input$inst_add, {
     
@@ -310,48 +317,106 @@ function(input, output, session) {
     
   })
   
-  # Observe and set current institution Node based on institution selection from dropdown
-  observeEvent(input$inst_view, {
-    if (length(institution_vec())>0){
-      inst_id <- which(institution_vec() == input$inst_view)
-      inst <- institution_ls()[[inst_id]]$tree
-      current_inst(inst)
-    }
-    
-  })
-  
-  # Render institution node structure based on current selected institution
-  output$inst_structure <- renderPrint({
-      print(current_inst())
-  })
-  
-  # Observe and update account types vector
-  observe({
-    if (!is.null(current_inst())){
-      inst <- current_inst()
-      account_types <- names(inst$children)
-      inst_account_types(account_types)
-      updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_types())
-    }
-  })
-  
-  
-  observeEvent(input$inst_account_type, {
-    if (!is.null(current_inst())){
-      inst <- current_inst()
-      account_type <- input$inst_account_type
-      parent <- inst[[account_type]]
-      children <- Traverse(parent)
-      children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
-      inst_accounts(children_names[-1])
-      updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
-    }
-  })
-  
   # Update dropdown choices when reactive values object changes for selection of institution view
   observe({
     updateSelectInput(session, inputId = "inst_view", choices = institution_vec())
   })
+  
+  # Observe and set current institution Node based on institution selection from dropdown
+  observeEvent(input$inst_view, {
+    if (length(institution_vec())>0){
+      inst_id <- which(institution_vec() == input$inst_view)
+      inst <- institution_ls()[[inst_id]]
+      current_inst(inst)
+    }
+  })
+  
+  # Observe and delete selected institution
+  observeEvent(input$inst_delete, {
+    
+    inst_id <- which(institution_vec() == input$inst_view)
+    inst_ls <- institution_ls()
+    inst_ls[[inst_id]] <- NULL
+    
+    institution_ls(inst_ls)
+    institution_vec(institution_vec()[!institution_vec() == input$inst_view])
+    
+    if (length(institution_vec()) == 0){
+      output$inst_panel <- reactive(FALSE)
+      outputOptions(output, "inst_panel", suspendWhenHidden = FALSE)
+    }
+    
+  })
+  
+  
+  
+  
+  # Multi Contract Import ----------------------------
+  
+  observeEvent(input$ct_import, {
+    
+    if(is.null(input$ct_file)){
+      output$ct_file_notification <- renderUI({
+        tags$div('Please upload a file!', style = 'color: red;')
+      })
+    }else{
+      output$ct_file_notification <- NULL
+      inst_id <- which(institution_vec() == input$inst_view)
+      inst <- institution_ls()[[inst_id]]
+      
+      path <- input$ct_file$datapath
+      
+      ct_df <- utils::read.csv(path)
+      ct_type <- ct_df$contractType[1]
+      
+      if((ct_type == 'ANN' && input$ct_ptf_type == 'Annuities') || 
+         (ct_type == 'PAM' && input$ct_ptf_type == 'PrincipalAtMaturities') ||
+         (ct_type == 'Investments' && input$ct_ptf_type == 'Operations') ||
+         (ct_type == 'OperationalCF' && input$ct_ptf_type == 'Operations')){
+        
+        if(input$ct_ptf_type != 'Operations'){
+          output$ct_file_notification <- renderUI({
+            tags$div('File imported!', style = 'color: green;')
+          })
+          
+          ct_ptf <- samplePortfolio(path, 'contracts')
+          assignment_details <- assignContracts2Tree(inst, ct_ptf)
+          inst <- assignment_details[[1]]
+          error_df <- assignment_details[[2]]
+          rfs <- assignment_details[[3]]
+          
+        }else{
+          ops_df <- samplePortfolio(path, 'operations')
+          
+          output$ct_file_notification <- renderUI({
+            tags$div('Ops file not supported yet. Bis mal geduldig!', style = 'color: red;')
+          })
+        }
+        
+      }else{
+        output$ct_file_notification <- renderUI({
+          tags$div("Uploaded file doesn't match 'Portfolio Type'!", style = 'color: red;')
+        })
+      }
+    }
+    
+    
+  })
+  
+  # Single Contract Import ---------------------------
+  
+  # Observe and update account types vector
+  observe({
+    if (!is.null(current_inst())){
+      inst <- current_inst()$tree
+      children <- Traverse(inst)
+      children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+      new_vector <- c(children_names)
+      inst_accounts(new_vector)
+      updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
+    }
+  })
+  
   
   # Update dropdown choices when reactive values object changes for applicable market objects
   observe({
@@ -361,6 +426,7 @@ function(input, output, session) {
     market_obj_vec(new_labels)
     updateSelectInput(session, inputId = "ct_moc", choices = market_obj_vec())
   })
+  
   
   # Structure ----------------------------------------
   
@@ -378,10 +444,15 @@ function(input, output, session) {
     return(NULL)
   }
   
-  # Observe and update account types vector in 'Structure' tab
+  # Render institution node structure based on current selected institution
+  output$inst_structure <- renderPrint({
+    print(current_inst())
+  })
+  
+  # Observe and update 'Node' dropdown in 'Structure' tab
   observe({
     if (!is.null(current_inst())){
-      inst <- current_inst()
+      inst <- current_inst()$tree
       children <- Traverse(inst)
       children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
       new_vector <- c('New', children_names[-1])
@@ -424,7 +495,7 @@ function(input, output, session) {
           tags$div("A node with the same name already exists!", style = "color: red;")
         })
       }else{
-        inst <- current_inst()
+        inst <- current_inst()$tree
         parent <- input$str_node_parent
         parent_object <- find_node_by_name(inst, parent)
         new_node <- input$str_new_node
@@ -443,10 +514,12 @@ function(input, output, session) {
         
         output$str_notification <- NULL
         
-        inst <- current_inst()
-        account_types <- names(inst$children)
-        inst_account_types(account_types)
-        updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_types())
+        inst <- current_inst()$tree
+        children <- Traverse(inst)
+        children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+        new_vector <- c(children_names)
+        inst_accounts(new_vector)
+        updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
       }
     }else{
       output$str_notification <- renderUI({
@@ -474,7 +547,7 @@ function(input, output, session) {
   })
   
   observeEvent(input$str_confirm_remove_node, {
-    inst <- current_inst()
+    inst <- current_inst()$tree
     node <- input$str_node
     node_object <- find_node_by_name(inst, node)
     parent <- node_object$parent
@@ -491,11 +564,12 @@ function(input, output, session) {
     str_node_parents(children_names)
     updateSelectInput(session, inputId = "str_node", choices = str_nodes())
     
-    inst <- current_inst()
-    account_types <- names(inst$children)
-    inst_account_types(account_types)
-    updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_types())
-    
+    inst <- current_inst()$tree
+    children <- Traverse(inst)
+    children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+    new_vector <- c(children_names)
+    inst_accounts(new_vector)
+    updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
   })
   
   observeEvent(input$str_rename_node, {
@@ -523,7 +597,7 @@ function(input, output, session) {
   
   observeEvent(input$str_rename_node_2, {
     if(input$str_new_node_name > ''){
-      inst <- current_inst()
+      inst <- current_inst()$tree
       node <- input$str_node
       node_object <- find_node_by_name(inst, node)
       node_object$name <- input$str_new_node_name
@@ -541,10 +615,12 @@ function(input, output, session) {
       
       output$str_notification <- NULL
       
-      inst <- current_inst()
-      account_types <- names(inst$children)
-      inst_account_types(account_types)
-      updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_types())
+      inst <- current_inst()$tree
+      children <- Traverse(inst)
+      children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+      new_vector <- c(children_names)
+      inst_accounts(new_vector)
+      updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
     }else{
       output$str_notification <- renderUI({
         tags$div("'New Name' cannot be empty!", style = "color: red;")
@@ -554,6 +630,9 @@ function(input, output, session) {
     
     
   })
+  
+  
+  
   
   #---------------------------------------------------
   #---------------------Downloads---------------------

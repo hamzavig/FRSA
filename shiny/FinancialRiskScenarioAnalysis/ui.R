@@ -34,6 +34,7 @@ fluidPage(
                 ),
                 placeholder = "No file selected."
               ),
+              uiOutput("rf_file_notification"),
               p(
                 "There are predefined Yield Curves and Default Curves datasets in the ",
                 strong("downloads"),
@@ -114,8 +115,12 @@ fluidPage(
             conditionalPanel(
               condition = 'output.inst_panel == true',
               column(
-                width = 9,
-                selectInput(inputId = "inst_view", NULL, choices = NULL, width = '100%')
+                width = 8,
+                selectInput("inst_view", NULL, choices = NULL, width = '100%')
+              ),
+              column(
+                width = 1,
+                actionButton("inst_delete", "Delete", icon = icon("minus"), width = "100%")
               )
             )
           ),
@@ -133,6 +138,7 @@ fluidPage(
                   ),
                   placeholder = "No file selected."
                 ),
+                uiOutput("ct_file_notification"),
                 p(
                   "There are predefined Financial Contract datasets in the ",
                   strong("downloads"),
@@ -141,7 +147,6 @@ fluidPage(
                 actionButton("ct_import", "Import Financial Contracts", width = "100%"),
                 p("- or -", style = "text-align: center;"),
                 br(),
-                selectInput("inst_account_type", "Account Type", choices = NULL),
                 selectInput("inst_account", "Account", choices = NULL),
                 selectInput("ct_type", "Contract Type",
                   choices = c(
@@ -254,13 +259,13 @@ fluidPage(
                     )
                   ),
                   tabPanel(
-                    "Assets"
-                  ),
-                  tabPanel(
-                    "Liabilities"
+                    "Financial Contracts"
                   ),
                   tabPanel(
                     "Market"
+                  ),
+                  tabPanel(
+                    "Log"
                   )
                 )
               )

@@ -13,6 +13,7 @@ library(dplyr)
 library(lubridate)
 library(timeDate)
 library(data.tree)
+library(utils)
 library("FRSA")
 
 # Define object styling using custom CSS
@@ -59,6 +60,10 @@ div[data-value='Market'] {
 }
 
 #inst_add {
+  height: 40px !important;
+}
+
+#inst_delete {
   height: 40px !important;
 }
 
