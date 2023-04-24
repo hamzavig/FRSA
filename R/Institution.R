@@ -41,13 +41,13 @@ createInstitution <- function(name, ...) {
   institution$AddChild("Operations")
   
   # Create underlying nodes for "Assets"
-  institution$Assets$AddChild("ShortTerm")
-  institution$Assets$AddChild("LongTerm")
+  institution$Assets$AddChild("ShortTermAssets")
+  institution$Assets$AddChild("LongTermAssets")
   institution$Assets$AddChild("FixedAssets")
   
   # Create underlying nodes for "Liabilities"
-  institution$Liabilities$AddChild("ShortTerm")
-  institution$Liabilities$AddChild("LongTerm")
+  institution$Liabilities$AddChild("ShortTermLiabilities")
+  institution$Liabilities$AddChild("LongTermLiabilities")
   institution$Liabilities$AddChild("Equity")
   
   # Create underlying nodes for "Operations"
@@ -73,32 +73,37 @@ createInstitution <- function(name, ...) {
 
 assignContracts2Tree <- function(institution, ptf, ...) {
   
-  tree_dict <-   c("ASL" = institution$Assets$ShortTerm$LiquidAssets,
-                   "ALL" = institution$Assets$LongTerm$Loans,
-                   "ALM" = institution$Assets$LongTerm$Mortgages,
-                   "AFA" = institution$Assets$FixedAssets,
-                   "LSD" = institution$Liabilities$ShortTerm$Deposits,
-                   "LLL" = institution$Liabilities$LongTerm$Loans,
-                   "LEQ" = institution$Liabilities$Equity,
-                   "ORC" = institution$Operations$Revenues$Commissions,
-                   "ORR" = institution$Operations$Revenues$Rent,
-                   "ORO" = institution$Operations$Revenues$Other,
-                   "OES" = institution$Operations$Expenses$Salaries,
-                   "OER" = institution$Operations$Expenses$Rent,
-                   "OEO" = institution$Operations$Expenses$Other
-                   )
-
+  errorLog <- data.frame(contractID = c(),
+                         node = c(),
+                         status = c(),
+                         description = c())
+  
   for(i in 1:length(ptf$contracts)){
     
-    contractID <- getCIDfromContract(ptf$contracts[[i]])
-    ct_leaf_key <- substr(contractID,1,3)
-    leaf <- tree_dict[ct_leaf_key]
+    ctrs <- lapply(institution$leaves, function(leaf) leaf$contracts)
+    ctrs <- unlist(ctrs, recursive = FALSE)
+    ctids <- sapply(ctrs, function(ct) ct$contractTerms$contractID)
     
-    stopifnot(leaf[[ct_leaf_key]]$isLeaf)
-    leaf[[ct_leaf_key]]$contracts <- c(leaf[[ct_leaf_key]]$contracts, ptf$contracts[[i]])
+    id <- ptf$contracts[[i]]$contractTerms$contractId
+    node <- ptf$contracts[[i]]$contractTerms$node
+    nodeObject <- findNodeByName(institution, node)
+    
+    if(is.null(nodeObject)){
+      errorLog[i,] <- c(id, node, "Error", "Node doesn't exist.")
+    }else if(!nodeObject$isLeaf){
+      errorLog[i,] <- c(id, node, "Error", "Node is not a leaf.")
+    }else if(id %in% ctids){
+      errorLog[i,] <- c(id, node, "Error", "Duplicate contract ID.")
+    }else{
+      nodeObject$contracts <- c(nodeObject$contracts, ptf$contracts[[i]])
+      errorLog[i,] <- c(id, node, "OK", "Successfully added.")
+    }
+    
   }
 
-  return(institution)
+  rfs <- sapply(ctrs, function(ct) ct$contractTerms$marketObjectCodeOfRateReset)
+  
+  return(list(institution, errorLog, rfs))
 }
 
 
