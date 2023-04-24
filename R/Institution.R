@@ -88,7 +88,7 @@ assignContracts2Tree <- function(institution, ptf, ...) {
       ctids <- sapply(cts, function(ct) ct$contractTerms$contractID)
     }
     
-    id <- ptf$contracts[[i]]$contractTerms$contractId
+    id <- ptf$contracts[[i]]$contractTerms$contractID
     node <- ptf$contracts[[i]]$contractTerms$node
     nodeObject <- findNodeByName(institution, node)
     
