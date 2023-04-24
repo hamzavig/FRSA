@@ -81,11 +81,11 @@ assignContracts2Tree <- function(institution, ptf, ...) {
   for(i in 1:length(ptf$contracts)){
     
     ctrs <- lapply(institution$leaves, function(leaf) leaf$contracts)
-    ctrs <- unlist(ctrs, recursive = FALSE)
-    if(is.null(ctrs)){
+    cts <- unlist(ctrs, recursive = FALSE)
+    if(is.null(cts)){
       ctids <- c('None')
     }else{
-      ctids <- sapply(ctrs, function(ct) ct$contractTerms$contractID)
+      ctids <- sapply(cts, function(ct) ct$contractTerms$contractID)
     }
     
     id <- ptf$contracts[[i]]$contractTerms$contractId
