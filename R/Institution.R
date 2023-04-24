@@ -93,14 +93,14 @@ assignContracts2Tree <- function(institution, ptf, ...) {
     nodeObject <- findNodeByName(institution, node)
     
     if(is.null(nodeObject)){
-      errorLog[i,] <- c(id, node, "Error", "Node doesn't exist.")
+      errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "Error", description = "Node doesn't exist!"))
     }else if(!nodeObject$isLeaf){
-      errorLog[i,] <- c(id, node, "Error", "Node is not a leaf.")
+      errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "Error", description = "Node is not a leaf!"))
     }else if(id %in% ctids){
-      errorLog[i,] <- c(id, node, "Error", "Duplicate contract ID.")
+      errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "Error", description = "Duplicate: This contract ID is alredy existing."))
     }else{
       nodeObject$contracts <- c(nodeObject$contracts, ptf$contracts[[i]])
-      errorLog[i,] <- c(id, node, "OK", "Successfully added.")
+      errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "OK", description = "Successfully added!"))
     }
     
   }
