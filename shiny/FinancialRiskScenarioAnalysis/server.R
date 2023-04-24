@@ -266,10 +266,13 @@ function(input, output, session) {
   institution_vec <- reactiveVal(c())
   institution_ls <- reactiveVal(list())
   
-  inst_top_level <- reactiveVal(c())
-  inst_account_type <- reactiveVal(c('None'))
-  inst_account <- reactiveVal(c())
-  inst_sub_account <- reactiveVal(c())
+  current_inst <- reactiveVal()
+  
+  inst_account_types <- reactiveVal(c())
+  inst_accounts <- reactiveVal(c('None'))
+  
+  str_nodes <- reactiveVal(c())
+  str_node_parents <- reactiveVal(c())
   
   market_obj_vec <- reactiveVal(c('None'))
   
@@ -280,7 +283,13 @@ function(input, output, session) {
       output$inst_warning <- renderUI({
         tags$div("Institution already exists!", style = "color: red;")
       })
-    } else {
+    }else if(input$inst_name == ''){
+      output$inst_warning <- renderUI({
+        tags$div("Please enter a value!", style = "color: orange;")
+      })
+      output$inst_panel <- reactive(FALSE)
+      outputOptions(output, "inst_panel", suspendWhenHidden = FALSE)
+    }else{
       output$inst_warning <- NULL
       new_inst <- input$inst_name
       temp_inst_vec <- c(institution_vec(),new_inst)
@@ -295,66 +304,48 @@ function(input, output, session) {
       inst_ls <- institution_ls()
       inst_ls <- append(inst_ls, list(inst_list))
       institution_ls(inst_ls)
+      output$inst_panel <- reactive(TRUE)
+      outputOptions(output, "inst_panel", suspendWhenHidden = FALSE)
     }
     
   })
   
-  
-  output$inst_structure <- renderPrint({
-    inst_id <- which(institution_vec() == input$inst_view)
-    if (length(inst_id) > 0){
-      print(institution_ls()[[inst_id]]$tree)
-    }
-  })
-  
-  
-  observe({
-    inst_id <- which(institution_vec() == input$inst_view)
-    if(length(inst_id) > 0){
+  # Observe and set current institution Node based on institution selection from dropdown
+  observeEvent(input$inst_view, {
+    if (length(institution_vec())>0){
+      inst_id <- which(institution_vec() == input$inst_view)
       inst <- institution_ls()[[inst_id]]$tree
-      top_level_accounts <- names(inst$children)
-      inst_top_level(top_level_accounts)
-      
-      
-      if(!is.null(input$inst_top_level_account) && input$inst_top_level_account != ""){
-        top_level_account <- input$inst_top_level_account
-        top_level_object <- inst[[top_level_account]]
-        if(!top_level_object$isLeaf){
-          output$accunt_type_input <- renderUI({
-            selectInput("inst_account_type", "Account Type", choices = NULL)
-          })
-          account_types <- names(top_level_object$children)
-          account_types <- c(account_types, 'None')
-          inst_account_type(account_types)
-          
-          
-          if(!is.null(input$inst_account_type) && input$inst_account_type != "" && input$inst_account_type != 'None'){
-            account_type <- input$inst_account_type
-            account_type_object <- top_level_object[[account_type]]
-            if(!account_type_object$isLeaf){
-              output$account_input <- renderUI({
-                selectInput("inst_account", "Account", choices = NULL)
-              })
-              accounts <- names(account_type_object$children)
-              accounts <- c(accounts, 'None')
-              inst_account(accounts)
-              
-              
-            }
-          }
-          
-        }
-      }
+      current_inst(inst)
+    }
+    
+  })
+  
+  # Render institution node structure based on current selected institution
+  output$inst_structure <- renderPrint({
+      print(current_inst())
+  })
+  
+  # Observe and update account types vector
+  observe({
+    if (!is.null(current_inst())){
+      inst <- current_inst()
+      account_types <- names(inst$children)
+      inst_account_types(account_types)
+      updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_types())
     }
   })
   
   
-  # Update dropdown choices for sub-account selection
-  observe({
-    updateSelectInput(session, inputId = "inst_top_level_account", choices = inst_top_level())
-    updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_type())
-    updateSelectInput(session, inputId = "inst_account", choices = inst_account())
-    updateSelectInput(session, inputId = "inst_sub_account", choices = inst_sub_account())
+  observeEvent(input$inst_account_type, {
+    if (!is.null(current_inst())){
+      inst <- current_inst()
+      account_type <- input$inst_account_type
+      parent <- inst[[account_type]]
+      children <- Traverse(parent)
+      children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+      inst_accounts(children_names[-1])
+      updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
+    }
   })
   
   # Update dropdown choices when reactive values object changes for selection of institution view
@@ -371,7 +362,198 @@ function(input, output, session) {
     updateSelectInput(session, inputId = "ct_moc", choices = market_obj_vec())
   })
   
+  # Structure ----------------------------------------
   
+  find_node_by_name <- function(node, name) {
+    if (node$name == name) {
+      return(node)
+    } else if (length(node$children) > 0) {
+      for (child in node$children) {
+        result <- find_node_by_name(child, name)
+        if (!is.null(result)) {
+          return(result)
+        }
+      }
+    }
+    return(NULL)
+  }
+  
+  # Observe and update account types vector in 'Structure' tab
+  observe({
+    if (!is.null(current_inst())){
+      inst <- current_inst()
+      children <- Traverse(inst)
+      children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+      new_vector <- c('New', children_names[-1])
+      str_nodes(new_vector)
+      str_node_parents(children_names)
+      updateSelectInput(session, inputId = "str_node", choices = str_nodes())
+    }
+  })
+  
+  observeEvent(input$str_node, {
+    if (input$str_node == 'New'){
+      output$str_node_options_1_1 <- renderUI({
+        selectInput('str_node_parent', 'Parent', choices = str_node_parents())
+      })
+      output$str_node_options_2_1 <- renderUI({
+        textInput('str_new_node', 'New Node', placeholder = 'Add new node...')
+      })
+      output$str_node_options_2_2 <- renderUI({
+        actionButton('str_add_new_node', 'Add', width = '100%')
+      })
+    }else{
+      output$str_node_options_1_2 <- NULL
+      output$str_node_options_2_2 <- NULL
+      output$str_node_options_1_1 <- renderUI({
+        actionButton('str_remove_node', 'Remove', width = '100%')
+      })
+      output$str_node_options_2_1 <- renderUI({
+        actionButton('str_rename_node', 'Rename', width = '100%')
+      })
+      output$str_notification <- NULL
+    }
+  })
+  
+  
+  observeEvent(input$str_add_new_node, {
+    if(input$str_new_node > ''){
+
+      if (input$str_new_node %in% str_node_parents()){
+        output$str_notification <- renderUI({
+          tags$div("A node with the same name already exists!", style = "color: red;")
+        })
+      }else{
+        inst <- current_inst()
+        parent <- input$str_node_parent
+        parent_object <- find_node_by_name(inst, parent)
+        new_node <- input$str_new_node
+        parent_object$AddChild(new_node)
+        
+        output$inst_structure <- renderPrint({
+          print(current_inst())
+        })
+        
+        children <- Traverse(inst)
+        children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+        new_vector <- c('New', children_names[-1])
+        str_nodes(new_vector)
+        str_node_parents(children_names)
+        updateSelectInput(session, inputId = "str_node", choices = str_nodes())
+        
+        output$str_notification <- NULL
+        
+        inst <- current_inst()
+        account_types <- names(inst$children)
+        inst_account_types(account_types)
+        updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_types())
+      }
+    }else{
+      output$str_notification <- renderUI({
+        tags$div("'New Node' cannot be empty!", style = "color: red;")
+      })
+    }
+  })
+  
+  observeEvent(input$str_remove_node, {
+    output$str_node_options_1_1 <- renderUI({
+      actionButton('str_confirm_remove_node', 'Confirm', width = '100%')
+    })
+    output$str_node_options_2_1 <- renderUI({
+      actionButton('str_cancel_remove_node', 'Cancel', width = '100%')
+    })
+  })
+  
+  observeEvent(input$str_cancel_remove_node, {
+    output$str_node_options_1_1 <- renderUI({
+      actionButton('str_remove_node', 'Remove', width = '100%')
+    })
+    output$str_node_options_2_1 <- renderUI({
+      actionButton('str_rename_node', 'Rename', width = '100%')
+    })
+  })
+  
+  observeEvent(input$str_confirm_remove_node, {
+    inst <- current_inst()
+    node <- input$str_node
+    node_object <- find_node_by_name(inst, node)
+    parent <- node_object$parent
+    parent$RemoveChild(node)
+    
+    output$inst_structure <- renderPrint({
+      print(current_inst())
+    })
+    
+    children <- Traverse(inst)
+    children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+    new_vector <- c('New', children_names[-1])
+    str_nodes(new_vector)
+    str_node_parents(children_names)
+    updateSelectInput(session, inputId = "str_node", choices = str_nodes())
+    
+    inst <- current_inst()
+    account_types <- names(inst$children)
+    inst_account_types(account_types)
+    updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_types())
+    
+  })
+  
+  observeEvent(input$str_rename_node, {
+    output$str_node_options_1_1 <- renderUI({
+      textInput('str_new_node_name', 'New Name', placeholder = 'Add new name...')
+    })
+    output$str_node_options_2_1 <- renderUI({
+      actionButton('str_rename_node_2', 'Rename', width = '100%')
+    })
+    output$str_node_options_2_2 <- renderUI({
+      actionButton('str_cancel_rename_node', 'Cancel', width = '100%')
+    })
+  })
+  
+  observeEvent(input$str_cancel_rename_node, {
+    output$str_node_options_1_1 <- renderUI({
+      actionButton('str_remove_node', 'Remove', width = '100%')
+    })
+    output$str_node_options_2_1 <- renderUI({
+      actionButton('str_rename_node', 'Rename', width = '100%')
+    })
+    output$str_node_options_2_2 <- NULL
+    output$str_notification <- NULL
+  })
+  
+  observeEvent(input$str_rename_node_2, {
+    if(input$str_new_node_name > ''){
+      inst <- current_inst()
+      node <- input$str_node
+      node_object <- find_node_by_name(inst, node)
+      node_object$name <- input$str_new_node_name
+      
+      output$inst_structure <- renderPrint({
+        print(current_inst())
+      })
+      
+      children <- Traverse(inst)
+      children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
+      new_vector <- c('New', children_names[-1])
+      str_nodes(new_vector)
+      str_node_parents(children_names)
+      updateSelectInput(session, inputId = "str_node", choices = str_nodes())
+      
+      output$str_notification <- NULL
+      
+      inst <- current_inst()
+      account_types <- names(inst$children)
+      inst_account_types(account_types)
+      updateSelectInput(session, inputId = "inst_account_type", choices = inst_account_types())
+    }else{
+      output$str_notification <- renderUI({
+        tags$div("'New Name' cannot be empty!", style = "color: red;")
+      })
+    }
+    
+    
+    
+  })
   
   #---------------------------------------------------
   #---------------------Downloads---------------------
@@ -412,6 +594,7 @@ function(input, output, session) {
       write.csv(datasetInput(), file, row.names = FALSE)
     }
   )
+  
   
   
   #---------------------------------------------------

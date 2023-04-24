@@ -99,22 +99,32 @@ fluidPage(
         ),
         tabPanel("Institution",
           id = "institution",
-          sidebarLayout(
-            sidebarPanel(
-              width = 3,
-              textInput("inst_name", "Name Institution", placeholder = "Bank_A", width = "100%"),
-              uiOutput('inst_warning'),
-              actionButton("inst_add", "Create", width = "100%")
+          
+          fluidRow(
+            id = 'inst_creation_div',
+            column(
+              width = 2,
+              textInput("inst_name", NULL, placeholder = "Add institution name...", width = "100%"),
+              uiOutput('inst_warning')
             ),
-            mainPanel(
-              selectInput(inputId = "inst_view", label = "Select Institution:", choices = NULL)
+            column(
+              width = 1,
+              actionButton("inst_add", "Create", icon = icon("plus"), width = "100%"),
+            ),
+            conditionalPanel(
+              condition = 'output.inst_panel == true',
+              column(
+                width = 9,
+                selectInput(inputId = "inst_view", NULL, choices = NULL, width = '100%')
+              )
             )
           ),
           conditionalPanel(
-            condition = 'input.inst_add > 0',
+            condition = 'output.inst_panel == true',
             sidebarLayout(
               sidebarPanel(
                 width = 3,
+                selectInput("ct_ptf_type", "Portfolio Type", choices = c("Annuities", "PrincipalAtMaturities", "Operations")),
                 fileInput("ct_file", "Upload Financial Contracts",
                   accept = c(
                     "text/csv",
@@ -131,10 +141,8 @@ fluidPage(
                 actionButton("ct_import", "Import Financial Contracts", width = "100%"),
                 p("- or -", style = "text-align: center;"),
                 br(),
-                selectInput("inst_top_level_account", "Top Level Account", choices = NULL),
-                uiOutput("accunt_type_input"),
-                uiOutput("account_input"),
-                uiOutput("sub_account_input"),
+                selectInput("inst_account_type", "Account Type", choices = NULL),
+                selectInput("inst_account", "Account", choices = NULL),
                 selectInput("ct_type", "Contract Type",
                   choices = c(
                     "ANN",
@@ -221,10 +229,29 @@ fluidPage(
                       ),
                       column(
                         width = 6,
-                        p('manage')
+                        p('In this section, you have the ability to modify the existing structure of the institution by adding new account types and/or accounts, renaming or removing them as needed.',
+                          style = "text-align: justify;"),
+                        p('Note that any changes made to the structure will affect the accounts and balances associated with the institution, so be careful when making changes and ensure that the structure accurately reflects the financial hierarchy of the institution.', 
+                          style = "text-align: justify;"),
+                        fluidRow(
+                          column(
+                            width = 4,
+                            selectInput('str_node', 'Node', choices = NULL),
+                            uiOutput('str_notification')
+                          ),
+                          column(
+                            width = 4,
+                            uiOutput('str_node_options_1_1'),
+                            uiOutput('str_node_options_1_2')
+                          ),
+                          column(
+                            width = 4,
+                            uiOutput('str_node_options_2_1'),
+                            uiOutput('str_node_options_2_2')
+                          )
+                        )
                       )
                     )
-                    
                   ),
                   tabPanel(
                     "Assets"

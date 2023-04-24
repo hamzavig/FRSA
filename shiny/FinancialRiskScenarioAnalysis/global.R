@@ -12,6 +12,7 @@ library(shinyjs)
 library(dplyr)
 library(lubridate)
 library(timeDate)
+library(data.tree)
 library("FRSA")
 
 # Define object styling using custom CSS
@@ -26,10 +27,6 @@ css <- "
 }
 
 div[data-value='Market'] {
-  margin-top: 20px !important;
-}
-
-div[data-value='Institution'] {
   margin-top: 20px !important;
 }
 
@@ -53,8 +50,39 @@ div[data-value='Institution'] {
   margin-top: 30px !important;
 }
 
-#inst_add_col {
-  padding-left: 0px !important;
+.selectize-input {
+  height: 40px !important;
 }
 
+#inst_creation_div {
+  margin-top: 20px !important;
+}
+
+#inst_add {
+  height: 40px !important;
+}
+
+#str_remove_node {
+  margin-top: 28px !important;
+}
+
+#str_confirm_remove_node {
+  margin-top: 28px !important;
+}
+
+#str_cancel_remove_node {
+  margin-top: 28px !important;
+}
+
+#str_rename_node {
+  margin-top: 28px !important;
+}
+
+#str_rename_node_2 {
+  margin-top: 28px !important;
+}
+
+#str_cancel_rename_node {
+  margin-top: 28px !important;
+}
 "
