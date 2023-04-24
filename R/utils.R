@@ -257,6 +257,23 @@ longName <- function(name) {
   return(out)
 }
 
+# ********************************************************
+# findNodeByName(node, name)
+#  get the node object of a data.tree with a given string
+# ********************************************************
+findNodeByName <- function(node, name) {
+  if (node$name == name) {
+    return(node)
+  } else if (length(node$children) > 0) {
+    for (child in node$children) {
+      result <- findNodeByName(child, name)
+      if (!is.null(result)) {
+        return(result)
+      }
+    }
+  }
+  return(NULL)
+}
 
 
 # -----------------------------------------------------------------
