@@ -6,7 +6,6 @@
 #*************************************************************
 
 #' @import data.tree
-#' @import dplyr
 setOldClass("Node")
 
 ##############################################################
@@ -254,11 +253,11 @@ getEvents <- function(node, cid, ...){
 
 
 # ************************************************************
-# getContractsAsDataFrames(node)
+# getContractsAsDataFrames(institution, node)
 # ************************************************************
 #' getContractsAsDataFrames
 #' 
-#' getContractsAsDataFrames(node) converts each contract 
+#' getContractsAsDataFrames(institution, node) converts each contract 
 #' under the given node to a data.frame
 #' 
 #' @include Portfolio.R
@@ -266,9 +265,9 @@ getEvents <- function(node, cid, ...){
 #' @export
 #' @rdname getLeafsAsDataFrames
 
-getContractsAsDataFrames <- function(node, ...) {
+getContractsAsDataFrames <- function(institution, node, ...) {
   
-  nodeObject <- findNodeByName(node)
+  nodeObject <- findNodeByName(institution, node)
   ctrs <- lapply(nodeObject$leaves, function(leaf) leaf$contracts)
   ctrs <- unlist(ctrs, recursive = FALSE)
   

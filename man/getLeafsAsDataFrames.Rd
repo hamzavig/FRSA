@@ -4,9 +4,9 @@
 \alias{getContractsAsDataFrames}
 \title{getContractsAsDataFrames}
 \usage{
-getContractsAsDataFrames(node, ...)
+getContractsAsDataFrames(institution, node, ...)
 }
 \description{
-getContractsAsDataFrames(node) converts each contract 
+getContractsAsDataFrames(institution, node) converts each contract 
 under the given node to a data.frame
 }
