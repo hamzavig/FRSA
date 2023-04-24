@@ -6,6 +6,7 @@
 #*************************************************************
 
 #' @import data.tree
+#' @import dplyr
 setOldClass("Node")
 
 ##############################################################
@@ -253,52 +254,33 @@ getEvents <- function(node, cid, ...){
 
 
 # ************************************************************
-# getLeafsAsDataFrames(institution)
+# getContractsAsDataFrames(node)
 # ************************************************************
-#' getLeafsAsDataFrames
+#' getContractsAsDataFrames
 #' 
-#' getLeafsAsDataFrames(institution) converts each leaf and it's contracts
-#' to a data.frame and returns a list of data.frames.
+#' getContractsAsDataFrames(node) converts each contract 
+#' under the given node to a data.frame
 #' 
 #' @include Portfolio.R
 #' @include ContractType.R
 #' @export
 #' @rdname getLeafsAsDataFrames
 
-getLeafsAsDataFrames <- function(institution, ...) {
+getContractsAsDataFrames <- function(node, ...) {
   
-  leaf_paths <- c("Assets$ShortTerm$LiquidAssets",
-                  "Assets$LongTerm$Loans",
-                  "Assets$LongTerm$Mortgages",
-                  "Assets$FixedAssets",
-                  "Liabilities$ShortTerm$Deposits",
-                  "Liabilities$LongTerm$Loans",
-                  "Liabilities$Equity",
-                  "Operations$Revenues$Commissions",
-                  "Operations$Revenues$Rent",
-                  "Operations$Revenues$Other",
-                  "Operations$Expenses$Salaries",
-                  "Operations$Expenses$Rent",
-                  "Operations$Expenses$Other"
-  )
+  nodeObject <- findNodeByName(node)
+  ctrs <- lapply(nodeObject$leaves, function(leaf) leaf$contracts)
+  ctrs <- unlist(ctrs, recursive = FALSE)
   
-  leaf_dfs <- list()
-  
-  for(i in 1:length(institution$leaves)){
-    
-    if(!is.null(institution$leaves[[i]]$contracts)){
-      leaf_ptf <- Portfolio()
-      leaf_ptf$contracts <- institution$leaves[[i]]$contracts
-      leaf_df <- getPortfolioAsDataFrame(leaf_ptf)
-    }else{
-      leaf_df <- data.frame()
-    }
-    
-    leaf_dfs[[i]] <- list(leaf = leaf_paths[i],
-                          contracts = leaf_df)
+  if(is.null(cts)){
+    df <- data.frame()
+  }else{
+    ptf <- Portfolio()
+    ptf$contracts <- ctrs
+    df <- getPortfolioAsDataFrame(ptf)
   }
   
-  return(leaf_dfs)
+  return(df)
 }
 
 ####--------------------------------------------------------------------------
