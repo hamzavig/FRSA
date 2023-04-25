@@ -162,6 +162,67 @@ addMarketObject2Contracts <- function(institution, yc, spread, cycle, ...) {
 }
 
 
+# ************************************************************
+# getNonLeafContracts(institution)
+# ************************************************************
+#' getNonLeafContracts
+#' 
+#' @export
+#' @rdname getNonLeafContracts
+#' 
+getNonLeafContracts <- function(node){
+  ctrs <- list()
+  nodes <- c()
+  
+  if(!node$isLeaf){
+    if(!is.null(node$contracts)){
+      ctrs <- c(ctrs, node$contracts)
+      nodes <- c(nodes, rep(node$name, length(ctrs)))
+      node$contracts <- NULL
+    }
+    if(!is.null(node$children)){
+      for(child in node$children){
+        res <- reassignContracts(child)
+        ctrs <- c(ctrs, res[[1]])
+        nodes <- c(nodes, res[[2]])
+      }
+    }
+  }
+  return(list(ctrs, nodes))
+}
+
+# ************************************************************
+# reassignNonLeafContracts(institution)
+# ************************************************************
+#' reassignNonLeafContracts
+#' 
+#' @export
+#' @rdname reassignNonLeafContracts
+#' 
+reassignNonLeafContracts <- function(node){
+  
+  res <- getNonLeafContracts(node)
+  ctrs <- res[[1]]
+  nodes <- res[[2]]
+  
+  for (i in length(ctrs)){
+    
+    newNode <- paste0('Other', nodes[i])
+    newNodeObject <- findNodeByName(node, newNode)
+    
+    if(is.null(newNodeObject)){
+      nodeObject <- findNodeByName(node, nodes[1])
+      nodeObject$AddChild(newNode)
+      newNodeObject <- findNodeByName(node, newNode)
+    }
+    
+    newNodeObject$contracts <- c(newNodeObject$contracts, ctrs[[i]])
+  }
+  return(node)
+}
+
+
+
 #' @include Events.R
 #' @include EventSeries.R
 #' @include RiskFactorConnector.R
