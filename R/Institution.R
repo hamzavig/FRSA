@@ -77,27 +77,29 @@ assignContracts2Tree <- function(institution, ptf, ...) {
                          node = c(),
                          status = c(),
                          description = c())
+  rfs <- data.frame(contractID = c(),
+                    marketObject = c())
   
   for(i in 1:length(ptf$contracts)){
     
     ctrs <- lapply(institution$leaves, function(leaf) leaf$contracts)
-    cts <- unlist(ctrs, recursive = FALSE)
-    if(is.null(cts)){
+    ctrs <- unlist(ctrs, recursive = FALSE)
+    if(is.null(ctrs)){
       ctids <- c('None')
     }else{
-      ctids <- sapply(cts, function(ct) ct$contractTerms$contractID)
+      ctids <- sapply(ctrs, function(ct) ct$contractTerms$contractID)
     }
     
     id <- ptf$contracts[[i]]$contractTerms$contractID
     node <- ptf$contracts[[i]]$contractTerms$node
     nodeObject <- findNodeByName(institution, node)
     
-    if(is.null(nodeObject)){
+    if(id %in% ctids){
+      errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "Error", description = "Duplicate: This contract ID is alredy existing."))
+    }else if(is.null(nodeObject)){
       errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "Error", description = "Node doesn't exist!"))
     }else if(!nodeObject$isLeaf){
       errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "Error", description = "Node is not a leaf!"))
-    }else if(id %in% ctids){
-      errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "Error", description = "Duplicate: This contract ID is alredy existing."))
     }else{
       nodeObject$contracts <- c(nodeObject$contracts, ptf$contracts[[i]])
       errorLog <- rbind(errorLog, list(contractID = id, node = node, status = "OK", description = "Successfully added!"))
@@ -105,7 +107,11 @@ assignContracts2Tree <- function(institution, ptf, ...) {
     
   }
 
-  rfs <- sapply(ctrs, function(ct) ct$contractTerms$marketObjectCodeOfRateReset)
+  rfList <- lapply(ctrs, function(ct) c(ct$contractTerms$contractID, if (!is.null(ct$contractTerms$marketObjectCodeOfRateReset)) ct$contractTerms$marketObjectCodeOfRateReset else 'None'))
+  
+  for(rf in rfList){
+    rfs <- rbind(rfs, list(contractID = rf[1], marketObject = rf[2]))
+  }
   
   return(list(institution, errorLog, rfs))
 }
