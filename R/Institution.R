@@ -182,7 +182,7 @@ getNonLeafContracts <- function(node){
     }
     if(!is.null(node$children)){
       for(child in node$children){
-        res <- reassignContracts(child)
+        res <- getNonLeafContracts(child)
         ctrs <- c(ctrs, res[[1]])
         nodes <- c(nodes, res[[2]])
       }
