@@ -229,6 +229,46 @@ reassignNonLeafContracts <- function(node){
 
 
 
+# ************************************************************
+# getAllContracts(node)
+# ************************************************************
+#' getAllContracts
+#' 
+#' @export
+#' @rdname getAllContracts
+#' 
+getAllContracts <- function(node){
+  
+  ctrs <- lapply(node$leaves, function(leaf) leaf$contracts)
+  ctrs <- unlist(ctrs, recursive = FALSE)
+  
+  return(ctrs)
+}
+
+# ************************************************************
+# getSingleContract(node)
+# ************************************************************
+#' getSingleContract
+#' 
+#' @export
+#' @rdname getSingleContract
+#' 
+getSingleContract <- function(node, ctid){
+  
+  ctrs <- getAllContracts(node)
+  
+  if(is.null(ctrs)){
+    return(NULL)
+  }else{
+    ct <- lapply(ctrs, function(ct) if(ct$contractTerms$contractID == ctid) ct)
+  }
+  return(ct)
+  
+}
+
+
+
+
 #' @include Events.R
 #' @include EventSeries.R
 #' @include RiskFactorConnector.R
