@@ -45,6 +45,7 @@ setMethod(f = "EventSeries", signature = c(),
 
 setMethod(f = "EventSeries", signature = c("ContractType", "character", "RiskFactorConnector"),
           definition = function(object, processor, riskFactors){
+            
             # cast contract as list of list
             contracts <- list(object)
             
@@ -309,63 +310,20 @@ setMethod(f = "EventSeries", signature = c("Investments", "timeDate", "missing")
 #' @rdname ev-methods
 setMethod(f = "events", signature = c("FEMSContract", "character", "missing"),
           definition = function(object, processor, riskFactors){
-            return(PAFEMS:::events(object,timeDate(substring(processor,1,10))))
+            return(FRSA:::events(object,timeDate(substring(processor,1,10))))
           })
 
 #' @export
 #' @rdname ev-methods
 setMethod(f = "events", signature = c("FEMSContract", "AD0", "missing"),
           definition = function(object, processor, riskFactors){
-            return(PAFEMS:::events(object, as.character(processor)))
+            return(FRSA:::events(object, as.character(processor)))
           })
 
 #' @export
 #' @rdname ev-methods
 setMethod(f = "events", signature = c("FEMSContract", "timeDate", "missing"),
           definition = function(object, processor, riskFactors){
-            return(PAFEMS:::EventSeries(object,processor))
+            return(FRSA:::EventSeries(object,processor))
           })
 
-
-
-#' generateEventSeries      Generic method definition
-#'
-#' Defines a generic method on S4 Class Eventseries. The instance is
-#' generateEventSeries < contract riskFactors serverURL >
-#'
-#' @param  contract     the contract to simulate cashflows for
-#' @param  riskFactors  list of riskFactors - scenario for contract simulation
-#' @param  serverURL    locate the ACTUS server performing the cashflow analysis
-#' @return              an EventSeries with cashflow events for the contract
-#' 
-setGeneric(name = "generateEventSeries",
-           def = function(object, processor, riskFactors){
-             standardGeneric("generateEventSeries")
-           })
-
-#' generateEventSeries        <contract>, <ACTUS-server-URL>, <risk-factor-list>
-#'
-#' exported function to simulate a contract cashflows and create an
-#'   EventSeries using  "ContractType", "list", "character" method instance.
-#'   constructs an EventSeries instance including as its events_df attribute a
-#'   dataframe of cashflow events for the input ACTUS contract. This cashflow
-#'   is generated with a callout to the ACTUS server located at ACTUS-server-URL
-#'   using a risk scenario specified as the list of risk factors. THe method
-#'   works by first creating a Portfolio with this ine contract and the supplied
-#'   risk factor list, then calling generateEvents on this portfolio
-#'
-#'   This is an internal method on EventSeries, and not exported.
-#'   generateEventSeries <contract>, risk-factors>, <serverURL> is the
-#'   exported wrapper function which is exported from FEMSdevPkg and calls this.
-#'
-#' @param  contract    S4 ref      class= ContractType
-#' @param  riskFactors list        list of S4 ref Class=RiskFactor
-#' @param  serverURL   character   URL of ACTUS server to simulate the contract
-#' @return              S4 ref     class=EventSeries
-#' @export
-#'
-setMethod(f = "generateEventSeries", signature = c("ContractType", "character", "list"),
-          definition = function(object, processor, riskFactors){
-              evs <- EventSeries(object, processor, riskFactors)
-              return(evs)
-          })
