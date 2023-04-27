@@ -262,7 +262,10 @@ getSingleContract <- function(node, ctid){
   }else{
     ct <- lapply(ctrs, function(ct) if(ct$contractTerms$contractID == ctid) ct)
   }
-  return(ct)
+  
+  ct <- Filter(Negate(is.null), ct)
+  
+  return(ct[[1]])
   
 }
 
@@ -278,15 +281,9 @@ getSingleContract <- function(node, ctid){
 duplicateContract <- function(inst, node, ctid){
   
   nodeObject <- findNodeByName(inst, node)
-  ctrs <- getAllContracts(nodeObject)
+  ct <- getSingleContract(nodeObject, ctid)
   
-  if(is.null(ctrs)){
-    return(NULL)
-  }else{
-    ct <- lapply(ctrs, function(ct) if(ct$contractTerms$contractID == ctid) ct)
-  }
-  
-  ct_df <- as.data.frame(ct[[1]]$contractTerms)
+  ct_df <- as.data.frame(ct$contractTerms)
   ct_df$contractID <- paste0(ct_df$contractID, '_DUP')
   ct_df$description <- ''
   ct_df$contrStrucObj.marketObjectCode <- ''
