@@ -275,9 +275,10 @@ getSingleContract <- function(node, ctid){
 #' @export
 #' @rdname duplicateContract
 #' 
-duplicateContract <- function(node, ctid){
+duplicateContract <- function(inst, node, ctid){
   
-  ctrs <- getAllContracts(node)
+  nodeObject <- findNodeByName(inst, node)
+  ctrs <- getAllContracts(nodeObject)
   
   if(is.null(ctrs)){
     return(NULL)
