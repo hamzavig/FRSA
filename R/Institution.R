@@ -298,7 +298,7 @@ duplicateContract <- function(inst, node, ctid){
     ptf$contracts <- operations_df2list(ct_df)
   }
 
-  res <- assignContracts2Tree(node, ptf)
+  res <- assignContracts2Tree(inst, ptf)
   
   return(res)
   
