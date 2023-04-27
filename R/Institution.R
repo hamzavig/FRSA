@@ -267,6 +267,68 @@ getSingleContract <- function(node, ctid){
 }
 
 
+# ************************************************************
+# duplicateContract(node, ctid)
+# ************************************************************
+#' duplicateContract
+#' 
+#' @export
+#' @rdname duplicateContract
+#' 
+duplicateContract <- function(node, ctid){
+  
+  ctrs <- getAllContracts(node)
+  
+  if(is.null(ctrs)){
+    return(NULL)
+  }else{
+    ct <- lapply(ctrs, function(ct) if(ct$contractTerms$contractID == ctid) ct)
+  }
+  
+  ct_df <- as.data.frame(ct[[1]]$contractTerms)
+  ct_df$contractID <- paste0(ct_df$contractID, '_DUP')
+  ct_df$description <- ''
+  ct_df$contrStrucObj.marketObjectCode <- ''
+  ct_df$contrStruc.referenceType <- ''
+  ct_df$contrStruc.referenceRole <- ''
+  
+  ptf <- Portfolio()
+  
+  if(ct$contractTerms$contractType %in% c('ANN', 'PAM')){
+    ptf$contracts <- contracts_df2list(ct_df)
+  }else{
+    ptf$contracts <- operations_df2list(ct_df)
+  }
+
+  res <- assignContracts2Tree(node, ptf)
+  
+  return(res)
+  
+}
+
+
+# ************************************************************
+# removeContract(inst, node, ctid)
+# ************************************************************
+#' removeContract
+#' 
+#' @export
+#' @rdname removeContract
+#' 
+removeContract <- function(inst, node, ctid){
+  
+  nodeObject <- findNodeByName(inst, node)
+  ctrs <- getAllContracts(nodeObject)
+  
+  ct <- lapply(ctrs, function(ct) if(ct$contractTerms$contractID != ctid) ct)
+  cts <- Filter(Negate(is.null), ct)
+  
+  nodeObject$contracts <- cts
+  inst <- nodeObject$root
+  
+  return(inst)
+  
+}
 
 
 #' @include Events.R
