@@ -4,7 +4,7 @@
 \alias{duplicateContract}
 \title{duplicateContract}
 \usage{
-duplicateContract(node, ctid)
+duplicateContract(inst, node, ctid)
 }
 \description{
 duplicateContract
