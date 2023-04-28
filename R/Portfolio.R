@@ -114,24 +114,34 @@ setGeneric(name = "getPortfolioAsDataFrame",
 setMethod ( f = "getPortfolioAsDataFrame",  signature = c("Portfolio"),
             definition = function(ptf) {
               
-              crid <- 1:length(ptf$contracts)
-              contracts_df <-data.frame(crid)
-              
-              for(i in 1:length(ptf$contracts)){
+              if(length(ptf$contracts) > 0){
+                crid <- 1:length(ptf$contracts)
+                contracts_df <-data.frame(crid)
                 
-                if(!ptf$contracts[[i]]$contractTerms$contractType %in% c("Investments", "OperationalCF")){
-                  Contract_Field_Names <- c("node", "contractID", "contractRole", "statusDate", "currency", "notionalPrincipal",
-                                            "nominalInterestRate", "contractDealDate", "initialExchangeDate","maturityDate")
-                }else{
+                for(i in 1:length(ptf$contracts)){
                   
-                  Contract_Field_Names <- c("node","contractID", "contractType", "contractRole", "currency", "initialExchangeDate","maturityDate", "notionalPrincipal")
+                  if(!ptf$contracts[[i]]$contractTerms$contractType %in% c("Investments", "OperationalCF")){
+                    Contract_Field_Names <- c("node", "contractID", "contractType", "contractRole", "currency", "notionalPrincipal",
+                                              "nominalInterestRate", "initialExchangeDate", "maturityDate")
+                  }else{
+                    
+                    Contract_Field_Names <- c("node","contractID", "contractType", "contractRole", "currency", "notionalPrincipal", 
+                                              "initialExchangeDate", "initialExchangeDate", "maturityDate", )
+                  }
+                  
+                  for(crfield in Contract_Field_Names) {
+                    contracts_df[crfield] <- unlist(sapply(ptf$contracts,
+                                                           function(ct){ct$contractTerms[[crfield]]}))
+                  }
                 }
-                
-                for(crfield in Contract_Field_Names) {
-                  contracts_df[crfield] <- unlist(sapply(ptf$contracts,
-                                                         function(ct){ct$contractTerms[[crfield]]}))
-                }
+                contracts_df <- subset(contracts_df, select = -crid)
+              }else{
+                Contract_Field_Names <- c("node", "contractID", "contractType", "contractRole", "currency", "notionalPrincipal",
+                                          "nominalInterestRate", "initialExchangeDate", "maturityDate")
+                contracts_df <- data.frame(matrix(ncol = length(Contract_Field_Names), nrow = 0))
+                colnames(contracts_df) <- Contract_Field_Names
               }
-              contracts_df <- subset(contracts_df, select = -crid)
+
               return(contracts_df)
+              
             } )
