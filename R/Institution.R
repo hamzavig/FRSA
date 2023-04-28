@@ -344,7 +344,7 @@ updateContract <- function(inst, node, ctid, term, value){
   nodeObject <- findNodeByName(inst, node)
   ct <- getSingleContract(nodeObject, ctid)
   
-  ct$contractsTerms[[term]] <- as.character(value)
+  ct$contractTerms[[term]] <- as.character(value)
   
   return(inst)
   
