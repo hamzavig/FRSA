@@ -331,6 +331,26 @@ removeContract <- function(inst, node, ctid){
   
 }
 
+# ************************************************************
+# updateContract(inst, node, ctid, term, value)
+# ************************************************************
+#' updateContract
+#' 
+#' @export
+#' @rdname updateContract
+#' 
+updateContract <- function(inst, node, ctid, term, value){
+  
+  nodeObject <- findNodeByName(inst, node)
+  ct <- getSingleContract(nodeObject, ctid)
+  
+  ct$contractsTerms[[term]] <- as.character(value)
+  
+  return(inst)
+  
+}
+
+
 
 #' @include Events.R
 #' @include EventSeries.R
