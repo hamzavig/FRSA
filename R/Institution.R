@@ -107,6 +107,9 @@ assignContracts2Tree <- function(institution, ptf, ...) {
     
   }
 
+  ctrs <- lapply(institution$leaves, function(leaf) leaf$contracts)
+  ctrs <- unlist(ctrs, recursive = FALSE)
+  
   rfList <- lapply(ctrs, function(ct) c(ct$contractTerms$contractID, if (!is.null(ct$contractTerms$marketObjectCodeOfRateReset)) ct$contractTerms$marketObjectCodeOfRateReset else 'None'))
   
   for(rf in rfList){
