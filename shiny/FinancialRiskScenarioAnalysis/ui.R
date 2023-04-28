@@ -259,13 +259,38 @@ fluidPage(
                     )
                   ),
                   tabPanel(
-                    "Financial Contracts"
+                    "Financial Contracts",
+                    br(),
+                    fluidRow(
+                      column(
+                        width = 12,
+                        selectInput("fc_view", NULL, choices = NULL, width = "100%"),
+                        uiOutput("fc_ui"),
+                        br()
+                      )
+                    )
                   ),
                   tabPanel(
-                    "Market"
+                    "Market Objects",
+                    br(),
+                    fluidRow(
+                      column(
+                        width = 12,
+                        p('This section captures the effective market object per financial contract.'),
+                        DTOutput("inst_market_df", width = '100%')
+                      )
+                    )
                   ),
                   tabPanel(
-                    "Log"
+                    "Log",
+                    br(),
+                    fluidRow(
+                      column(
+                        width = 12,
+                        p('This section captures only the logs of the last initiated financial contract import whether it was a file upload or a single financial contract import.'),
+                        DTOutput("error_log_df", width = '100%')
+                      )
+                    )
                   )
                 )
               )

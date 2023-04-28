@@ -280,6 +280,10 @@ function(input, output, session) {
   str_nodes <- reactiveVal(c())
   str_node_parents <- reactiveVal(c())
   
+  nodes <- reactiveVal(c())
+  
+  ctrs <- reactiveVal(data.frame())
+  
   market_obj_vec <- reactiveVal(c('None'))
   
   # Institution Creation / Deletion ------------------
@@ -326,7 +330,7 @@ function(input, output, session) {
   observeEvent(input$inst_view, {
     if (length(institution_vec())>0){
       inst_id <- which(institution_vec() == input$inst_view)
-      inst <- institution_ls()[[inst_id]]
+      inst <- institution_ls()[[inst_id]]$tree
       current_inst(inst)
     }
   })
@@ -362,7 +366,7 @@ function(input, output, session) {
     }else{
       output$ct_file_notification <- NULL
       inst_id <- which(institution_vec() == input$inst_view)
-      inst <- institution_ls()[[inst_id]]
+      inst <- institution_ls()[[inst_id]]$tree
       
       path <- input$ct_file$datapath
       
@@ -380,16 +384,55 @@ function(input, output, session) {
           })
           
           ct_ptf <- samplePortfolio(path, 'contracts')
-          assignment_details <- assignContracts2Tree(inst, ct_ptf)
-          inst <- assignment_details[[1]]
-          error_df <- assignment_details[[2]]
-          rfs <- assignment_details[[3]]
+          inst <- assignContracts2Tree(inst, ct_ptf)
+          
+          current_inst(inst)
+          node <- input$fc_view
+          ct_df <- getContractsAsDataFrames(inst, node)
+          ctrs(ct_df)
+          
+          output$fc_ui <- renderUI({
+            tagList(
+              DTOutput("fc_df"),
+              br(),
+              uiOutput("ct_buttons")
+            )
+          })
+          
+          output$error_log_df <- renderDataTable({
+            current_inst()$errorLog %>% datatable(options = list(
+              scrollX = TRUE,
+              columnDefs = list(list(className = "nowrap", targets = "_all"))
+            ),
+            selection = list(mode = 'single'),
+            editable = TRUE
+            )
+          })
+          
+          output$inst_market_df <- renderDataTable({
+            current_inst()$rfs %>% datatable(options = list(
+              scrollX = TRUE,
+              columnDefs = list(list(className = "nowrap", targets = "_all"))
+            ),
+            selection = list(mode = 'single'),
+            editable = TRUE
+            )
+          })
+
+          output$fc_df <- renderDataTable({
+            ctrs() %>% datatable(options = list(
+              scrollX = TRUE,
+              columnDefs = list(list(className = "nowrap", targets = "_all"))
+            ),
+            selection = list(mode = 'single')
+            )
+          })
           
         }else{
           ops_df <- samplePortfolio(path, 'operations')
           
           output$ct_file_notification <- renderUI({
-            tags$div('Ops file not supported yet. Bis mal geduldig!', style = 'color: red;')
+            tags$div('Operations file not supported yet.', style = 'color: red;')
           })
         }
         
@@ -399,8 +442,6 @@ function(input, output, session) {
         })
       }
     }
-    
-    
   })
   
   # Single Contract Import ---------------------------
@@ -408,12 +449,12 @@ function(input, output, session) {
   # Observe and update account types vector
   observe({
     if (!is.null(current_inst())){
-      inst <- current_inst()$tree
+      inst <- current_inst()
       children <- Traverse(inst)
       children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
       new_vector <- c(children_names)
-      inst_accounts(new_vector)
-      updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
+      nodes(new_vector)
+      updateSelectInput(session, inputId = "inst_account", choices = nodes())
     }
   })
   
@@ -452,12 +493,9 @@ function(input, output, session) {
   # Observe and update 'Node' dropdown in 'Structure' tab
   observe({
     if (!is.null(current_inst())){
-      inst <- current_inst()$tree
-      children <- Traverse(inst)
-      children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
-      new_vector <- c('New', children_names[-1])
+      nodes <- nodes()
+      new_vector <- c('New', nodes[-1])
       str_nodes(new_vector)
-      str_node_parents(children_names)
       updateSelectInput(session, inputId = "str_node", choices = str_nodes())
     }
   })
@@ -465,7 +503,7 @@ function(input, output, session) {
   observeEvent(input$str_node, {
     if (input$str_node == 'New'){
       output$str_node_options_1_1 <- renderUI({
-        selectInput('str_node_parent', 'Parent', choices = str_node_parents())
+        selectInput('str_node_parent', 'Parent', choices = nodes())
       })
       output$str_node_options_2_1 <- renderUI({
         textInput('str_new_node', 'New Node', placeholder = 'Add new node...')
@@ -495,31 +533,34 @@ function(input, output, session) {
           tags$div("A node with the same name already exists!", style = "color: red;")
         })
       }else{
-        inst <- current_inst()$tree
+        inst <- current_inst()
         parent <- input$str_node_parent
         parent_object <- find_node_by_name(inst, parent)
         new_node <- input$str_new_node
         parent_object$AddChild(new_node)
         
+        inst <- reassignNonLeafContracts(inst)
+        current_inst(inst)
+        
         output$inst_structure <- renderPrint({
           print(current_inst())
         })
         
-        children <- Traverse(inst)
-        children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
-        new_vector <- c('New', children_names[-1])
-        str_nodes(new_vector)
-        str_node_parents(children_names)
-        updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-        
-        output$str_notification <- NULL
-        
-        inst <- current_inst()$tree
+        inst <- current_inst()
         children <- Traverse(inst)
         children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
         new_vector <- c(children_names)
-        inst_accounts(new_vector)
-        updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
+        nodes(new_vector)
+        nodes <- nodes()
+        
+        new_vector <- c('New', nodes[-1])
+        str_nodes(new_vector)
+        
+        updateSelectInput(session, inputId = "str_node", choices = str_nodes())
+        updateSelectInput(session, inputId = "inst_account", choices = nodes())
+        
+        output$str_notification <- NULL
+        
       }
     }else{
       output$str_notification <- renderUI({
@@ -547,7 +588,7 @@ function(input, output, session) {
   })
   
   observeEvent(input$str_confirm_remove_node, {
-    inst <- current_inst()$tree
+    inst <- current_inst()
     node <- input$str_node
     node_object <- find_node_by_name(inst, node)
     parent <- node_object$parent
@@ -557,19 +598,18 @@ function(input, output, session) {
       print(current_inst())
     })
     
-    children <- Traverse(inst)
-    children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
-    new_vector <- c('New', children_names[-1])
-    str_nodes(new_vector)
-    str_node_parents(children_names)
-    updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-    
-    inst <- current_inst()$tree
+    inst <- current_inst()
     children <- Traverse(inst)
     children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
     new_vector <- c(children_names)
-    inst_accounts(new_vector)
-    updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
+    nodes(new_vector)
+    nodes <- nodes()
+    
+    new_vector <- c('New', nodes[-1])
+    str_nodes(new_vector)
+    
+    updateSelectInput(session, inputId = "str_node", choices = str_nodes())
+    updateSelectInput(session, inputId = "inst_account", choices = nodes())
   })
   
   observeEvent(input$str_rename_node, {
@@ -597,7 +637,7 @@ function(input, output, session) {
   
   observeEvent(input$str_rename_node_2, {
     if(input$str_new_node_name > ''){
-      inst <- current_inst()$tree
+      inst <- current_inst()
       node <- input$str_node
       node_object <- find_node_by_name(inst, node)
       node_object$name <- input$str_new_node_name
@@ -606,21 +646,21 @@ function(input, output, session) {
         print(current_inst())
       })
       
-      children <- Traverse(inst)
-      children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
-      new_vector <- c('New', children_names[-1])
-      str_nodes(new_vector)
-      str_node_parents(children_names)
-      updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-      
-      output$str_notification <- NULL
-      
-      inst <- current_inst()$tree
+      inst <- current_inst()
       children <- Traverse(inst)
       children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
       new_vector <- c(children_names)
-      inst_accounts(new_vector)
-      updateSelectInput(session, inputId = "inst_account", choices = inst_accounts())
+      nodes(new_vector)
+      nodes <- nodes()
+      
+      new_vector <- c('New', nodes[-1])
+      str_nodes(new_vector)
+      
+      updateSelectInput(session, inputId = "str_node", choices = str_nodes())
+      updateSelectInput(session, inputId = "inst_account", choices = nodes())
+      
+      output$str_notification <- NULL
+
     }else{
       output$str_notification <- renderUI({
         tags$div("'New Name' cannot be empty!", style = "color: red;")
@@ -631,7 +671,409 @@ function(input, output, session) {
     
   })
   
+  # Financial Contracts ------------------------------
   
+  observe({
+    updateSelectInput(session, inputId = "fc_view", choices = nodes())
+  })
+  
+  observeEvent(input$fc_view, {
+    if(!is.null(nodes())){
+      inst <- current_inst()
+      node <- input$fc_view
+      df <- getContractsAsDataFrames(inst, node)
+      ctrs(df)
+      
+      output$fc_ui <- renderUI({
+        tagList(
+          DTOutput("fc_df"),
+          br(),
+          uiOutput("ct_buttons")
+        )
+      })
+      
+      output$fc_df <- renderDataTable({
+        ctrs() %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single')
+        )
+      })
+      
+      output$ct_buttons <- renderUI({
+        tagList(
+          actionButton("ct_details", "Details"),
+          actionButton("ct_duplicate", "Duplicate"),
+          actionButton("ct_remove", "Remove"),
+          actionButton("ct_move", "Move"),
+          div(downloadButton("ct_download", "Download"), style = "float:right")
+        )
+      })
+    }
+  })
+  
+  observeEvent(input$ct_details, {
+    inst <- current_inst()
+    selected_row <- input$fc_df_rows_selected
+    if(!is.null(selected_row)){
+      ct <- ctrs()[selected_row,]
+      ctid <- ct$contractID
+      
+      ctObject <- getSingleContract(inst, ctid)
+      ct_details_df <- as.data.frame(ctObject$contractTerms)
+      
+      output$fc_ui <- renderUI({
+        tagList(
+          DTOutput("fc_df"),
+          br(),
+          uiOutput("ct_buttons"),
+          plotOutput("ev_plot"),
+          DTOutput("ev_df")
+        )
+      })
+      
+      output$fc_df <- renderDataTable({
+        ct_details_df %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single'),
+        editable = TRUE
+        )
+      })
+      
+      evs <- EventSeries(ctObject, "https://demo.actusfrf.org:8080/", RFConn())
+      
+      output$ev_plot <- renderPlot({
+        cashflowPlot(evs)
+      })
+
+      output$ev_df <- renderDataTable({
+        evs$events_df %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single')
+        )
+      })
+      
+      output$ct_buttons <- renderUI({
+        actionButton("ct_details_close", "Close")
+      })
+    }
+  })
+  
+  observeEvent(input$fc_df_cell_edit, {
+    
+    inst <- current_inst()
+    info <- input$fc_df_cell_edit
+    row <- ctrs()[info$row,]
+    node <- row$node
+    ctid <- row$contractID
+    term <- info$col
+    value <- info$value
+    
+    inst <- updateContract(inst, node, ctid, term, value)
+    current_inst(inst)
+    
+    node <- input$fc_view
+    df <- getContractsAsDataFrames(current_inst(), node)
+    ctrs(df)
+    
+    if(term == 6){
+      ctid <- value
+    }
+    
+    ctObject <- getSingleContract(inst, ctid)
+    ct_details_df <- as.data.frame(ctObject$contractTerms)
+
+    output$fc_df <- renderDataTable({
+      ct_details_df %>% datatable(options = list(
+        scrollX = TRUE,
+        columnDefs = list(list(className = "nowrap", targets = "_all"))
+      ),
+      selection = list(mode = 'single'),
+      editable = TRUE
+      )
+    })
+
+    evs <- EventSeries(ctObject, "https://demo.actusfrf.org:8080/", RFConn())
+
+    output$ev_plot <- renderPlot({
+      cashflowPlot(evs)
+    })
+
+    output$ev_df <- renderDataTable({
+      evs$events_df %>% datatable(options = list(
+        scrollX = TRUE,
+        columnDefs = list(list(className = "nowrap", targets = "_all"))
+      ),
+      selection = list(mode = 'single')
+      )
+    })
+    
+  })
+  
+  observeEvent(input$ct_details_close, {
+    
+    output$fc_ui <- renderUI({
+      tagList(
+        DTOutput("fc_df"),
+        br(),
+        uiOutput("ct_buttons")
+      )
+    })
+    
+    output$fc_df <- renderDataTable({
+      ctrs() %>% datatable(options = list(
+        scrollX = TRUE,
+        columnDefs = list(list(className = "nowrap", targets = "_all"))
+      ),
+      selection = list(mode = 'single')
+      )
+    })
+    
+    output$ct_buttons <- renderUI({
+      tagList(
+        actionButton("ct_details", "Details"),
+        actionButton("ct_duplicate", "Duplicate"),
+        actionButton("ct_remove", "Remove"),
+        actionButton("ct_move", "Move"),
+        div(downloadButton("ct_download", "Download"), style = "float:right")
+      )
+    })
+  })
+  
+  
+  observeEvent(input$ct_duplicate, {
+    
+    inst <- current_inst()
+    selected_row <- input$fc_df_rows_selected
+    if(!is.null(selected_row)){
+      
+      ct <- ctrs()[selected_row,]
+      ctid <- ct$contractID
+      node <- ct$node
+      
+      inst <- duplicateContract(inst, node, ctid)
+
+      current_inst(inst)
+      node <- input$fc_view
+      df <- getContractsAsDataFrames(current_inst(), node)
+      ctrs(df)
+      
+      output$error_log_df <- renderDataTable({
+        current_inst()$errorLog %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single'),
+        editable = TRUE
+        )
+      })
+
+      output$inst_market_df <- renderDataTable({
+        current_inst()$rfs %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single'),
+        editable = TRUE
+        )
+      })
+
+      output$fc_df <- renderDataTable({
+        ctrs() %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single')
+        )
+      })
+    }
+    
+  })
+  
+  
+  observeEvent(input$ct_remove, {
+    
+    inst <- current_inst()
+    selected_row <- input$fc_df_rows_selected
+    if(!is.null(selected_row)){
+      
+      ct <- ctrs()[selected_row,]
+      ctid <- ct$contractID
+      node <- ct$node
+      
+      inst <- removeContract(inst, node, ctid)
+      current_inst(inst)
+      
+      node <- input$fc_view
+      df <- getContractsAsDataFrames(current_inst(), node)
+      ctrs(df)
+      
+      output$fc_df <- renderDataTable({
+        ctrs() %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single')
+        )
+      })
+      
+    }
+  })
+  
+  
+  observeEvent(input$ct_move, {
+    inst <- current_inst()
+    selected_row <- input$fc_df_rows_selected
+    if(!is.null(selected_row)){
+      ct <- ctrs()[selected_row,]
+      node <- ct$node
+      
+      leave_nodes <- Traverse(inst$leaves)
+      leave_names <- sapply(seq_along(leave_nodes), function(i) leave_nodes[[i]]$name)
+      leave_names <- leave_names[leave_names != node]
+      
+      output$ct_buttons <- renderUI({
+        tagList(
+          selectInput('ct_target_node', 'Target Node', choices = leave_names),
+          actionButton('ct_move_2', 'Move'),
+          actionButton("ct_details_close", "Cancel")
+        )
+      })
+    }
+  })
+  
+  observeEvent(input$ct_move_2, {
+    
+    inst <- current_inst()
+    selected_row <- input$fc_df_rows_selected
+    if(!is.null(selected_row)){
+      
+      ct <- ctrs()[selected_row,]
+      ctid <- ct$contractID
+      source_node <- ct$node
+      target_node <- input$ct_target_node
+      
+      source_nodeObject <- FindNode(inst, source_node)
+      target_nodeObject <- FindNode(inst, target_node)
+      
+      ctObject <- getSingleContract(source_nodeObject, ctid)
+      inst <- removeContract(inst, source_node, ctid)
+      current_inst(inst)
+      
+      ctObject$contractTerms$node <- target_node
+      target_nodeObject$contracts <- c(target_nodeObject$contracts, ctObject)
+      
+      node <- input$fc_view
+      df <- getContractsAsDataFrames(current_inst(), node)
+      ctrs(df)
+      
+      output$fc_df <- renderDataTable({
+        ctrs() %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single')
+        )
+      })
+      
+      output$ct_buttons <- renderUI({
+        tagList(
+          actionButton("ct_details", "Details"),
+          actionButton("ct_duplicate", "Duplicate"),
+          actionButton("ct_remove", "Remove"),
+          actionButton("ct_move", "Move"),
+          div(downloadButton("ct_download", "Download"), style = "float:right")
+        )
+      })
+    }
+    
+  })
+  
+  
+  output$ct_download <- downloadHandler(
+    
+    filename = function() {
+      paste("financial_contracts_", Sys.Date(), ".zip", sep = "")
+    },
+    content = function(file) {
+      
+      temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+      dir.create(temp_directory)
+      
+      ann_cols <- c('node','calendar','businessDayConvention','endOfMonthConvention','contractType','statusDate','contractRole',
+                    'legalEntityIDRecordCreator','contractID','legalEntityIDCounterparty','cycleAnchorDateOfInterestPayment',
+                    'cycleOfInterestPayment','nominalInterestRate','dayCountConvention','accruedInterest','cyclePointOfInterestPayment',
+                    'currency','amortizationDate','contractDealDate','initialExchangeDate','premiumDiscountAtIED','maturityDate',
+                    'notionalPrincipal','cycleAnchorDateOfPrincipalRedemption','cycleOfPrincipalRedemption','nextPrincipalRedemptionPayment',
+                    'terminationDate','cycleAnchorDateOfRateReset','cycleOfRateReset','rateSpread','marketObjectCodeOfRateReset',
+                    'cyclePointOfRateReset','rateMultiplier','description','contrStrucObj.marketObjectCode','contrStruc.referenceType','contrStruc.referenceRole') 
+      
+      pam_cols <- c('node','calendar','businessDayConvention','endOfMonthConvention','contractType','statusDate','contractRole',
+                   'legalEntityIDRecordCreator','contractID','legalEntityIDCounterparty','cycleAnchorDateOfInterestPayment','cycleOfInterestPayment',
+                   'arrayCycleAnchorDateOfInterestPayment','arrayCycleOfInterestPayment','nominalInterestRate','dayCountConvention','accruedInterest',
+                   'capitalizationEndDate','cycleAnchorDateOfInterestCalculationBase','cycleOfInterestCalculationBase','interestCalculationBase',
+                   'interestCalculationBaseAmount','cyclePointOfInterestPayment','currency','amortizationDate','contractDealDate','initialExchangeDate','premiumDiscountAtIED',
+                   'maturityDate','notionalPrincipal','cycleAnchorDateOfPrincipalRedemption','cycleOfPrincipalRedemption','nextPrincipalRedemptionPayment',
+                   'arrayCycleAnchorDateOfPrincipalRedemption','arrayCycleOfPrincipalRedemption','arrayNextPrincipalRedemptionPayment','arrayIncreaseDecrease','purchaseDate',
+                   'priceAtPurchaseDate','terminationDate','priceAtTerminationDate','marketObjectCodeOfScalingIndex','scalingIndexAtStatusDate','cycleAnchorDateOfScalingIndex',
+                   'cycleOfScalingIndex','scalingEffect','cycleAnchorDateOfRateReset','cycleOfRateReset','rateSpread','arrayCycleAnchorDateOfRateReset','arrayCycleOfRateReset',
+                   'arrayRate','arrayFixedVariable','marketObjectCodeOfRateReset','cyclePointOfRateReset','fixingDays','rateMultiplier','description','contrStrucObj.marketObjectCode',
+                   'contrStruc.referenceType','contrStruc.referenceRole')
+      
+      ops_cols <- c('node','contractType','contractID','contractRole','currency','notionalPrincipal','initialExchangeDate','maturityDate','repetition','frequency','times','inverted','description')
+      
+      ctrs <- getAllContracts(current_inst())
+      split_list <- split(ctrs, sapply(ctrs, function(x) x$contractTerms$contractType))
+      
+      df_list <- list()
+      
+      for(type in split_list){
+        
+        ctrs <- lapply(type, function(ct) ct$contractTerms)
+        
+        if(ctrs[[1]]$contractType == 'ANN'){
+          col_names <- ann_cols
+        }else if(ctrs[[1]]$contractType == 'PAM'){
+          col_names <- pam_cols
+        }else{
+          col_names <- ops_cols
+        }
+
+        crid <- 1:length(ctrs)
+        df <- data.frame(crid)
+        
+        for(col in col_names) {
+          df[col] <- unlist(sapply(ctrs, function(ct) if(is.null(ct[[col]])) 'NULL' else ct[[col]]))
+        }
+        
+        df <- subset(df, select = -crid)
+        
+        df_list <- append(df_list, list(df))
+      }
+      
+      df_list %>%
+        imap(function(x,y){
+          if(!is.null(x)){
+            file_name <- glue("{x$contractType[1]}_financial_contracts.csv")
+            readr::write_csv(x, file.path(temp_directory, file_name))
+          }
+        })
+      
+      zip::zip(
+        zipfile = file,
+        files = dir(temp_directory),
+        root = temp_directory
+      )
+      
+    },
+    contentType = "application/zip"
+    
+  )
   
   
   #---------------------------------------------------
