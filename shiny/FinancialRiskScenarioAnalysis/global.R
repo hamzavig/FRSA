@@ -12,7 +12,6 @@ library(data.tree)
 library(utils)
 library(glue)
 library(tidyverse)
-install_github('hamzavig/FRSA')
 library("FRSA")
 
 # Define object styling using custom CSS
