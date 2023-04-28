@@ -441,13 +441,14 @@ getContractsAsDataFrames <- function(institution, node, ...) {
   ctrs <- lapply(nodeObject$leaves, function(leaf) leaf$contracts)
   ctrs <- unlist(ctrs, recursive = FALSE)
   
-  if(is.null(ctrs)){
-    df <- data.frame()
-  }else{
-    ptf <- Portfolio()
+  ptf <- Portfolio()
+  if(!is.null(ctrs)){
     ptf$contracts <- ctrs
-    df <- getPortfolioAsDataFrame(ptf)
+  }else{
+    ptf$contracts <- list()
   }
+  
+  df <- getPortfolioAsDataFrame(ptf)
   
   return(df)
 }
