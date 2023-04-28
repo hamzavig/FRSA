@@ -116,7 +116,10 @@ assignContracts2Tree <- function(institution, ptf, ...) {
     rfs <- rbind(rfs, list(contractID = rf[1], marketObject = rf[2]))
   }
   
-  return(list(institution, errorLog, rfs))
+  institution$errorLog <- errorLog
+  institution$rfs <- rfs
+  
+  return(institution)
 }
 
 
@@ -301,9 +304,9 @@ duplicateContract <- function(inst, node, ctid){
     ptf$contracts <- operations_df2list(ct_df)
   }
 
-  res <- assignContracts2Tree(inst, ptf)
+  inst <- assignContracts2Tree(inst, ptf)
   
-  return(res)
+  return(inst)
   
 }
 
