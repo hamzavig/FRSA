@@ -227,6 +227,7 @@ reassignNonLeafContracts <- function(node){
         nodeObject$AddChild(newNode)
         newNodeObject <- findNodeByName(node, newNode)
       }
+      ctrs[[i]]$contractTerms$node <- newNode
       newNodeObject$contracts <- c(newNodeObject$contracts, ctrs[[i]])
     }
   }
