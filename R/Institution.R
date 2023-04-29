@@ -217,19 +217,20 @@ reassignNonLeafContracts <- function(node){
   ctrs <- res[[1]]
   nodes <- res[[2]]
   
-  for (i in length(ctrs)){
-    
-    newNode <- paste0('Other', nodes[i])
-    newNodeObject <- findNodeByName(node, newNode)
-    
-    if(is.null(newNodeObject)){
-      nodeObject <- findNodeByName(node, nodes[1])
-      nodeObject$AddChild(newNode)
+  if(length(ctrs) > 0){
+    for (i in 1:length(ctrs)){
+      newNode <- paste0('Other', nodes[i])
       newNodeObject <- findNodeByName(node, newNode)
+      
+      if(is.null(newNodeObject)){
+        nodeObject <- findNodeByName(node, nodes[1])
+        nodeObject$AddChild(newNode)
+        newNodeObject <- findNodeByName(node, newNode)
+      }
+      newNodeObject$contracts <- c(newNodeObject$contracts, ctrs[[i]])
     }
-    
-    newNodeObject$contracts <- c(newNodeObject$contracts, ctrs[[i]])
   }
+  
   return(node)
 }
 
