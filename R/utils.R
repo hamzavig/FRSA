@@ -257,10 +257,12 @@ longName <- function(name) {
   return(out)
 }
 
-# ********************************************************
-# findNodeByName(node, name)
-#  get the node object of a data.tree with a given string
-# ********************************************************
+#' ********************************************************
+#' findNodeByName(node, name)
+#'  get the node object of a data.tree with a given string
+#' ********************************************************
+#' @export
+#'
 findNodeByName <- function(node, name) {
   if (node$name == name) {
     return(node)
@@ -323,7 +325,8 @@ convert.Duration <- function(duration, ISO) {
   return(out)
 }
 
-
+#' @export
+#'
 getContractTerms <- function(type) {
   
   if(type == 'ANN'){
