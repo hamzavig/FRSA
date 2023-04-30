@@ -58,6 +58,25 @@ createInstitution <- function(name, ...) {
 }
 
 # ************************************************************
+# addSingleContract(inst)
+# ************************************************************
+#' addSingleContract
+#' 
+#' assignSingleContract(institution, ptf) assigns a given Portfolio <ptf>
+#' to the respective leaf of the institution tree while converting the contracts
+#' of the given Portfolio <ptf> into a data.frame first.
+#' 
+#' @include Portfolio.R
+#' @include ContractType.R
+#' @export
+#' @rdname addSingleContract
+
+addSingleContract <- function(inst){
+  return(NULL)
+}
+
+
+# ************************************************************
 # assignContracts2Tree(institution, ptf)
 # ************************************************************
 #' assignContracts2Tree
