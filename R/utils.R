@@ -322,3 +322,37 @@ convert.Duration <- function(duration, ISO) {
   }
   return(out)
 }
+
+
+getContractTerms <- function(type) {
+  
+  if(type == 'ANN'){
+    terms <- c('node','calendar','businessDayConvention','endOfMonthConvention','contractType','statusDate','contractRole',
+               'legalEntityIDRecordCreator','contractID','legalEntityIDCounterparty','cycleAnchorDateOfInterestPayment',
+               'cycleOfInterestPayment','nominalInterestRate','dayCountConvention','accruedInterest','cyclePointOfInterestPayment',
+               'currency','amortizationDate','contractDealDate','initialExchangeDate','premiumDiscountAtIED','maturityDate',
+               'notionalPrincipal','cycleAnchorDateOfPrincipalRedemption','cycleOfPrincipalRedemption','nextPrincipalRedemptionPayment',
+               'terminationDate','cycleAnchorDateOfRateReset','cycleOfRateReset','rateSpread','marketObjectCodeOfRateReset',
+               'cyclePointOfRateReset','rateMultiplier','description','contrStrucObj.marketObjectCode','contrStruc.referenceType','contrStruc.referenceRole') 
+  }else if(type == 'PAM'){
+    terms <- c('node','calendar','businessDayConvention','endOfMonthConvention','contractType','statusDate','contractRole',
+               'legalEntityIDRecordCreator','contractID','legalEntityIDCounterparty','cycleAnchorDateOfInterestPayment','cycleOfInterestPayment',
+               'arrayCycleAnchorDateOfInterestPayment','arrayCycleOfInterestPayment','nominalInterestRate','dayCountConvention','accruedInterest',
+               'capitalizationEndDate','cycleAnchorDateOfInterestCalculationBase','cycleOfInterestCalculationBase','interestCalculationBase',
+               'interestCalculationBaseAmount','cyclePointOfInterestPayment','currency','amortizationDate','contractDealDate','initialExchangeDate','premiumDiscountAtIED',
+               'maturityDate','notionalPrincipal','cycleAnchorDateOfPrincipalRedemption','cycleOfPrincipalRedemption','nextPrincipalRedemptionPayment',
+               'arrayCycleAnchorDateOfPrincipalRedemption','arrayCycleOfPrincipalRedemption','arrayNextPrincipalRedemptionPayment','arrayIncreaseDecrease','purchaseDate',
+               'priceAtPurchaseDate','terminationDate','priceAtTerminationDate','marketObjectCodeOfScalingIndex','scalingIndexAtStatusDate','cycleAnchorDateOfScalingIndex',
+               'cycleOfScalingIndex','scalingEffect','cycleAnchorDateOfRateReset','cycleOfRateReset','rateSpread','arrayCycleAnchorDateOfRateReset','arrayCycleOfRateReset',
+               'arrayRate','arrayFixedVariable','marketObjectCodeOfRateReset','cyclePointOfRateReset','fixingDays','rateMultiplier','description','contrStrucObj.marketObjectCode',
+               'contrStruc.referenceType','contrStruc.referenceRole')
+  }else if(type == 'Operations'){
+    terms <- c('node','contractType','contractID','contractRole','currency','notionalPrincipal','initialExchangeDate','maturityDate','repetition','frequency','times','inverted','description')
+  }else{
+    stop(paste("ContractType", type, "does not exist!", sep=" "))
+  }
+  
+  return(terms)
+  
+}
+
