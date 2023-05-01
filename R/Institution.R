@@ -532,8 +532,7 @@ setMethod(f = "value", signature = c("Node", "timeDate", "ANY"),
             res <- data.frame(
               t(object2$Get("value", format = function(x) as.numeric(ff(x,0)))  ),
               check.names=FALSE, fix.empty.names=FALSE)
-            # res <- value(object, as.character(by), type=type, method=method,
-            #              scale=scale, digits=digits)
+
             rownames(res) <- capture.output(print(object2))[-1]
             colnames(res) <- as.character(by)
             return(round(res/scale,digits))

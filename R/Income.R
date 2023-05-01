@@ -266,9 +266,9 @@ income.from.revaluation.from.es = function(eventSeries, by, method, digits=2, ..
   
   # compute mark-to-model values
   if (is.null(method)) {
-    vals <- PAFEMS::value(eventSeries, as.character(by), type = "market", digits = digits)
+    vals <- FRSA::value(eventSeries, as.character(by), type = "market", digits = digits)
   } else {
-    vals <- PAFEMS::value(eventSeries, as.character(by), type = "market", method = method, digits = digits)
+    vals <- FRSA::value(eventSeries, as.character(by), type = "market", method = method, digits = digits)
   }
 
   inc <- as.numeric( diff(vals) + pr.cf[-1])

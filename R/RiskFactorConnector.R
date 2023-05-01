@@ -143,7 +143,7 @@ setGeneric(name = "add", useAsDefault = TRUE,
 setMethod("add", signature = c("RiskFactorConnector", "list"),
           definition = function(object, what, ...){
             for (i in what) {
-              PAFEMS:::add(object, i, ...)
+              FRSA:::add(object, i, ...)
             }
           })
 
@@ -182,7 +182,7 @@ setMethod("add", signature = c("RiskFactorConnector", "list"),
 #' @aliases add,RiskFactorConnector,list-method
 setMethod("add", signature = c("RiskFactorConnector", "RiskFactor"),
           definition = function(object, what, ...){
-            id <- PAFEMS:::get(what, "label")
+            id <- FRSA:::get(what, "label")
             rf_list <- list(New = what)
             if (length(id) == 0) {
               names(rf_list) <- paste("RiskFactor_",as.character(length(object$riskfactors) + 1), sep = "")
