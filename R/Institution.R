@@ -522,7 +522,7 @@ setMethod(f = "value", signature = c("Node", "timeDate", "ANY"),
             aggregateAnalytics(object, "value")
             
             object$Liabilities$Equity$value <- -object$value
-            object$Liabilities$value <- object$Liabilities$ShortTerm$value + object$Liabilities$LongTerm$value + object$Liabilities$Equity$value
+            object$Liabilities$value <- object$Liabilities$ShortTermLiabilities$value + object$Liabilities$LongTermLiabilities$value + object$Liabilities$Equity$value
             object$value <- rep(0, length(object$value))
             
             object2 <- Clone(object)
