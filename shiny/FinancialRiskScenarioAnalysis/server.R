@@ -5,7 +5,7 @@
 
 # Define server logic
 function(input, output, session) {
-
+  
   
   #---------------------------------------------------
   #------------------Scenario Analysis----------------
@@ -18,7 +18,7 @@ function(input, output, session) {
   
   # Define reactive data object for defaultCurve data frame
   defaultCurve_df <- reactiveVal(data.frame())
-
+  
   # Define reactive list object for yieldCurve data frame
   yieldCurve_ls <- reactiveVal(list())
   
@@ -265,17 +265,12 @@ function(input, output, session) {
     }
   )
   
-  
-  
-  
   # Institutions -------------------------------------
   
   institution_vec <- reactiveVal(c())
   institution_ls <- reactiveVal(list())
-
-  current_inst <- reactiveVal()
   
-  inst_accounts <- reactiveVal(c())
+  current_inst <- reactiveVal()
   
   str_nodes <- reactiveVal(c())
   str_node_parents <- reactiveVal(c())
@@ -284,7 +279,7 @@ function(input, output, session) {
   
   ctrs <- reactiveVal(data.frame())
   
-  market_obj_vec <- reactiveVal(c('None'))
+  market_obj_vec <- reactiveVal(c())
   
   # Institution Creation / Deletion ------------------
   
@@ -352,9 +347,6 @@ function(input, output, session) {
     
   })
   
-  
-  
-  
   # Multi Contract Import ----------------------------
   
   observeEvent(input$ct_import, {
@@ -418,7 +410,7 @@ function(input, output, session) {
             editable = TRUE
             )
           })
-
+          
           output$fc_df <- renderDataTable({
             ctrs() %>% datatable(options = list(
               scrollX = TRUE,
@@ -454,7 +446,7 @@ function(input, output, session) {
       children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
       new_vector <- c(children_names)
       nodes(new_vector)
-      updateSelectInput(session, inputId = "inst_account", choices = nodes())
+      updateSelectInput(session, inputId = "node", choices = nodes())
     }
   })
   
@@ -463,9 +455,137 @@ function(input, output, session) {
   observe({
     yc_df <- yieldCurve_df()
     yc_labels <- yc_df$label
-    new_labels <- c('None', yc_labels)
-    market_obj_vec(new_labels)
-    updateSelectInput(session, inputId = "ct_moc", choices = market_obj_vec())
+    market_obj_vec(yc_labels)
+    ct_mocs <- c('None', market_obj_vec())
+    updateSelectInput(session, inputId = "marketObjectCodeOfRateReset", choices = ct_mocs)
+  })
+  
+  observeEvent(input$initialExchangeDate, {
+    statusDate <- input$initialExchangeDate - days(1)
+    cycleAnchorDateOfInterestPayment <- input$initialExchangeDate + years(1)
+    contractDealDate <- input$initialExchangeDate - days(1)
+    maturityDate <- input$initialExchangeDate + years(5)
+    cycleAnchorDateOfPrincipalRedemption <- input$initialExchangeDate + years(1)
+    updateDateInput(session, "statusDate", value = statusDate)
+    updateDateInput(session, "cycleAnchorDateOfInterestPayment", value = cycleAnchorDateOfInterestPayment)
+    updateDateInput(session, "contractDealDate", value = contractDealDate)
+    updateDateInput(session, "maturityDate", value = maturityDate)
+    updateDateInput(session, "cycleAnchorDateOfPrincipalRedemption", value = cycleAnchorDateOfPrincipalRedemption)
+  })
+  
+  observeEvent(input$ct_add, {
+    
+    if(input$contractID == ''){
+      output$ct_single_notification <- renderUI({
+        tags$div("'Contract ID' is a mandatory field!", style = 'color: red;')
+      })
+    }else if(length(input$cycleAnchorDateOfInterestPayment) == 0 && input$cycleOfInterestPayment != 'None'){
+      output$ct_single_notification <- renderUI({
+        tags$div("If 'Cycle Anchor Date Of Interest Payment' is not set then 'Cycle Of Interest Payment' has to be 'None'!", style = 'color: red;')
+      })
+    }else if(length(input$cycleAnchorDateOfInterestPayment) > 0 && input$cycleOfInterestPayment == 'None'){
+      output$ct_single_notification <- renderUI({
+        tags$div("If 'Cycle Anchor Date Of Interest Payment' is set then 'Cycle Of Interest Payment' is mandatory!", style = 'color: red;')
+      })
+    }else if(length(input$cycleAnchorDateOfPrincipalRedemption) == 0 && input$cycleOfPrincipalRedemption != 'None'){
+      output$ct_single_notification <- renderUI({
+        tags$div("If 'Cycle Anchor Date Of Principal Redemption' is not set then 'Cycle Of Principal Redemption' has to be 'None'!", style = 'color: red;')
+      })
+    }else if(length(input$cycleAnchorDateOfPrincipalRedemption) > 0 && input$cycleOfPrincipalRedemption == 'None'){
+      output$ct_single_notification <- renderUI({
+        tags$div("If 'Cycle Anchor Date Of Principal Redemption' is set then 'Cycle Of Principal Redemption' is mandatory!", style = 'color: red;')
+      })
+    }else if(length(input$cycleAnchorDateOfRateReset) == 0 && input$cycleOfRateReset != 'None'){
+      output$ct_single_notification <- renderUI({
+        tags$div("If 'Cycle Anchor Date Of Rate Reset' is not set then 'Cycle Of Rate Reset' has to be 'None'!", style = 'color: red;')
+      })
+    }else if(length(input$cycleAnchorDateOfRateReset) > 0 && input$cycleOfRateReset == 'None'){
+      output$ct_single_notification <- renderUI({
+        tags$div("If 'Cycle Anchor Date Of Rate Reset' is set then 'Cycle Of Rate Reset' is mandatory!", style = 'color: red;')
+      })
+    }else{
+      inst <- current_inst()
+      contractTerms <- getContractTerms(input$contractType)
+      
+      # initialize an empty data frame with column names
+      ct_df <- data.frame(matrix(ncol = length(contractTerms), nrow = 0))
+      colnames(ct_df) <- contractTerms
+      
+      # Loop through variable suffixes
+      for (term in contractTerms) {
+        # Create full variable name
+        variable <- paste0("input$", term)
+        # Access variable value
+        value <- eval(parse(text = variable))
+        # Convert Sys.Date() values to character strings with format "YYYY-MM-DD"
+        if (inherits(value, "Date")) {
+          value <- format(value, "%Y-%m-%d")
+        }
+        ct_df[1,term] <- if(length(value) == 0 || is.null(value) || is.na(value) || value == 'None' || value == "") 'NULL' else value
+      }
+      
+      output$singleCTinput <- renderPrint({
+        print(ct_df)
+      })
+      
+      ct <- contracts_df2list(ct_df)
+      ptf <- Portfolio()
+      ptf$contracts <- ct
+      
+      inst <- assignContracts2Tree(inst, ptf)
+      current_inst(inst)
+      
+      ctrs_df <- getContractsAsDataFrames(current_inst(), input$fc_view)
+      ctrs(ctrs_df)
+      
+      output$fc_ui <- renderUI({
+        tagList(
+          DTOutput("fc_df"),
+          br(),
+          uiOutput("ct_buttons")
+        )
+      })
+      
+      output$ct_buttons <- renderUI({
+        tagList(
+          actionButton("ct_details", "Details"),
+          actionButton("ct_duplicate", "Duplicate"),
+          actionButton("ct_remove", "Remove"),
+          actionButton("ct_move", "Move"),
+          div(downloadButton("ct_download", "Download"), style = "float:right")
+        )
+      })
+      
+      output$error_log_df <- renderDataTable({
+        current_inst()$errorLog %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single'),
+        editable = TRUE
+        )
+      })
+      
+      output$inst_market_df <- renderDataTable({
+        current_inst()$rfs %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single'),
+        editable = TRUE
+        )
+      })
+      
+      output$fc_df <- renderDataTable({
+        ctrs() %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single')
+        )
+      })
+    }
+    
   })
   
   
@@ -527,8 +647,8 @@ function(input, output, session) {
   
   observeEvent(input$str_add_new_node, {
     if(input$str_new_node > ''){
-
-      if (input$str_new_node %in% str_node_parents()){
+      
+      if (input$str_new_node %in% nodes()){
         output$str_notification <- renderUI({
           tags$div("A node with the same name already exists!", style = "color: red;")
         })
@@ -541,6 +661,10 @@ function(input, output, session) {
         
         inst <- reassignNonLeafContracts(inst)
         current_inst(inst)
+        
+        node <- input$fc_view
+        df <- getContractsAsDataFrames(inst, node)
+        ctrs(df)
         
         output$inst_structure <- renderPrint({
           print(current_inst())
@@ -557,7 +681,7 @@ function(input, output, session) {
         str_nodes(new_vector)
         
         updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-        updateSelectInput(session, inputId = "inst_account", choices = nodes())
+        updateSelectInput(session, inputId = "node", choices = nodes())
         
         output$str_notification <- NULL
         
@@ -609,7 +733,7 @@ function(input, output, session) {
     str_nodes(new_vector)
     
     updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-    updateSelectInput(session, inputId = "inst_account", choices = nodes())
+    updateSelectInput(session, inputId = "node", choices = nodes())
   })
   
   observeEvent(input$str_rename_node, {
@@ -657,10 +781,10 @@ function(input, output, session) {
       str_nodes(new_vector)
       
       updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-      updateSelectInput(session, inputId = "inst_account", choices = nodes())
+      updateSelectInput(session, inputId = "node", choices = nodes())
       
       output$str_notification <- NULL
-
+      
     }else{
       output$str_notification <- renderUI({
         tags$div("'New Name' cannot be empty!", style = "color: red;")
@@ -748,7 +872,7 @@ function(input, output, session) {
       output$ev_plot <- renderPlot({
         cashflowPlot(evs)
       })
-
+      
       output$ev_df <- renderDataTable({
         evs$events_df %>% datatable(options = list(
           scrollX = TRUE,
@@ -787,7 +911,7 @@ function(input, output, session) {
     
     ctObject <- getSingleContract(inst, ctid)
     ct_details_df <- as.data.frame(ctObject$contractTerms)
-
+    
     output$fc_df <- renderDataTable({
       ct_details_df %>% datatable(options = list(
         scrollX = TRUE,
@@ -797,13 +921,13 @@ function(input, output, session) {
       editable = TRUE
       )
     })
-
+    
     evs <- EventSeries(ctObject, "https://demo.actusfrf.org:8080/", RFConn())
-
+    
     output$ev_plot <- renderPlot({
       cashflowPlot(evs)
     })
-
+    
     output$ev_df <- renderDataTable({
       evs$events_df %>% datatable(options = list(
         scrollX = TRUE,
@@ -857,7 +981,7 @@ function(input, output, session) {
       node <- ct$node
       
       inst <- duplicateContract(inst, node, ctid)
-
+      
       current_inst(inst)
       node <- input$fc_view
       df <- getContractsAsDataFrames(current_inst(), node)
@@ -872,7 +996,7 @@ function(input, output, session) {
         editable = TRUE
         )
       })
-
+      
       output$inst_market_df <- renderDataTable({
         current_inst()$rfs %>% datatable(options = list(
           scrollX = TRUE,
@@ -882,7 +1006,7 @@ function(input, output, session) {
         editable = TRUE
         )
       })
-
+      
       output$fc_df <- renderDataTable({
         ctrs() %>% datatable(options = list(
           scrollX = TRUE,
@@ -1014,16 +1138,16 @@ function(input, output, session) {
                     'cyclePointOfRateReset','rateMultiplier','description','contrStrucObj.marketObjectCode','contrStruc.referenceType','contrStruc.referenceRole') 
       
       pam_cols <- c('node','calendar','businessDayConvention','endOfMonthConvention','contractType','statusDate','contractRole',
-                   'legalEntityIDRecordCreator','contractID','legalEntityIDCounterparty','cycleAnchorDateOfInterestPayment','cycleOfInterestPayment',
-                   'arrayCycleAnchorDateOfInterestPayment','arrayCycleOfInterestPayment','nominalInterestRate','dayCountConvention','accruedInterest',
-                   'capitalizationEndDate','cycleAnchorDateOfInterestCalculationBase','cycleOfInterestCalculationBase','interestCalculationBase',
-                   'interestCalculationBaseAmount','cyclePointOfInterestPayment','currency','amortizationDate','contractDealDate','initialExchangeDate','premiumDiscountAtIED',
-                   'maturityDate','notionalPrincipal','cycleAnchorDateOfPrincipalRedemption','cycleOfPrincipalRedemption','nextPrincipalRedemptionPayment',
-                   'arrayCycleAnchorDateOfPrincipalRedemption','arrayCycleOfPrincipalRedemption','arrayNextPrincipalRedemptionPayment','arrayIncreaseDecrease','purchaseDate',
-                   'priceAtPurchaseDate','terminationDate','priceAtTerminationDate','marketObjectCodeOfScalingIndex','scalingIndexAtStatusDate','cycleAnchorDateOfScalingIndex',
-                   'cycleOfScalingIndex','scalingEffect','cycleAnchorDateOfRateReset','cycleOfRateReset','rateSpread','arrayCycleAnchorDateOfRateReset','arrayCycleOfRateReset',
-                   'arrayRate','arrayFixedVariable','marketObjectCodeOfRateReset','cyclePointOfRateReset','fixingDays','rateMultiplier','description','contrStrucObj.marketObjectCode',
-                   'contrStruc.referenceType','contrStruc.referenceRole')
+                    'legalEntityIDRecordCreator','contractID','legalEntityIDCounterparty','cycleAnchorDateOfInterestPayment','cycleOfInterestPayment',
+                    'arrayCycleAnchorDateOfInterestPayment','arrayCycleOfInterestPayment','nominalInterestRate','dayCountConvention','accruedInterest',
+                    'capitalizationEndDate','cycleAnchorDateOfInterestCalculationBase','cycleOfInterestCalculationBase','interestCalculationBase',
+                    'interestCalculationBaseAmount','cyclePointOfInterestPayment','currency','amortizationDate','contractDealDate','initialExchangeDate','premiumDiscountAtIED',
+                    'maturityDate','notionalPrincipal','cycleAnchorDateOfPrincipalRedemption','cycleOfPrincipalRedemption','nextPrincipalRedemptionPayment',
+                    'arrayCycleAnchorDateOfPrincipalRedemption','arrayCycleOfPrincipalRedemption','arrayNextPrincipalRedemptionPayment','arrayIncreaseDecrease','purchaseDate',
+                    'priceAtPurchaseDate','terminationDate','priceAtTerminationDate','marketObjectCodeOfScalingIndex','scalingIndexAtStatusDate','cycleAnchorDateOfScalingIndex',
+                    'cycleOfScalingIndex','scalingEffect','cycleAnchorDateOfRateReset','cycleOfRateReset','rateSpread','arrayCycleAnchorDateOfRateReset','arrayCycleOfRateReset',
+                    'arrayRate','arrayFixedVariable','marketObjectCodeOfRateReset','cyclePointOfRateReset','fixingDays','rateMultiplier','description','contrStrucObj.marketObjectCode',
+                    'contrStruc.referenceType','contrStruc.referenceRole')
       
       ops_cols <- c('node','contractType','contractID','contractRole','currency','notionalPrincipal','initialExchangeDate','maturityDate','repetition','frequency','times','inverted','description')
       
@@ -1043,7 +1167,7 @@ function(input, output, session) {
         }else{
           col_names <- ops_cols
         }
-
+        
         crid <- 1:length(ctrs)
         df <- data.frame(crid)
         
@@ -1076,6 +1200,236 @@ function(input, output, session) {
   )
   
   
+  
+  
+  # Risk Analysis ------------------------------------
+  
+  scenarios <- reactiveVal(c())
+  scenario_values_ls <- reactiveVal(list())
+  current_scenario <- reactiveVal()
+  
+  observe({
+    updateSelectInput(session, "ra_inst", choices = institution_vec())
+  })
+  
+  observe({
+    updateSelectInput(session, inputId = "ra_irr_moc", choices = market_obj_vec())
+  })
+  
+  observeEvent(input$ra_start, {
+    inst_id <- which(institution_vec() == input$ra_inst)
+    inst <- institution_ls()[[inst_id]]$tree
+    
+    if(input$ra_irr_value_view == 'market'){
+      scenario_name <- paste(length(scenarios()) + 1, 
+                             input$ra_inst, 
+                             input$ra_scenario, 
+                             input$ra_irr_value_view, 
+                             paste(input$ra_irr_scenario, 
+                                   input$ra_irr_moc, 
+                                   input$ra_irr_shift_amount, 
+                                   sep = " "), 
+                             input$ra_irr_income_view, 
+                             paste(input$ra_irr_from, 
+                                   " - ", 
+                                   input$ra_irr_to), 
+                             sep = " | ")
+    }else{
+      scenario_name <- paste(length(scenarios()) + 1, 
+                             input$ra_inst, 
+                             input$ra_scenario, 
+                             input$ra_irr_value_view, 
+                             input$ra_irr_income_view, 
+                             paste(input$ra_irr_from, 
+                                   " - ", 
+                                   input$ra_irr_to), 
+                             sep = " | ")
+    }
+
+    scenario_values <- list(id = length(scenarios()) + 1,
+                            scenario = input$ra_scenario,
+                            valueType = input$ra_irr_value_view,
+                            incomeType = input$ra_irr_income_view
+                            )
+    
+    scenarios(c(scenarios(), scenario_name))
+    
+    updateSelectInput(session, "ra_view", choices = scenarios())
+    
+    rfConn <- RFConn()
+    
+    for(rf in yieldCurve_ls()){
+      add(rfConn, list(rf))
+    }
+    
+    inst <- events(object = inst, riskFactors = rfConn)
+    scenario_values$inst <- inst
+    
+    t0 <- as.character(input$ra_irr_from)
+    tn <- as.character(input$ra_irr_to)
+    
+    n <- yearFraction(t0, tn)
+    t0Year <- as.numeric(substr(t0,1,4))
+    tnYear <- as.numeric(substr(tn,1,4))
+    by <- timeSequence(t0, by="1 years", length.out=n+2)
+    tb <- timeBuckets(by, bucketLabs=t0Year:tnYear, 
+                      breakLabs=substr(as.character(by),3,10))
+    
+    if(input$ra_irr_value_view == 'market'){
+      
+      yc_id <- which(yieldCurve_df()$label == input$ra_irr_moc)
+      ycObject <- yieldCurve_ls()[[yc_id]]
+      
+      ycShiftedObject <- YieldCurve(label = "YC_Shifted",
+                                    ReferenceDate = ycObject$ReferenceDate,
+                                    Tenors = ycObject$Tenors,
+                                    Rates = ycObject$Rates)
+      
+      ycShiftedObject <- shiftYieldCurve(ycShiftedObject, input$ra_irr_shift_amount)
+      
+      scenario_values$ycDefault <- ycObject
+      scenario_values$ycShifted <- ycShiftedObject
+      
+      val <- value(inst, tb, type = 'market', method = DcEngine(RFConn(ycObject)), scale = 1000000, digits = 2)
+      valShifted <- value(inst, tb, type = 'market', method = DcEngine(RFConn(ycShiftedObject)), scale = 1000000, digits = 2)
+      
+      scenario_values$val <- val
+      scenario_values$valShifted <- valShifted
+      
+    }else{
+      val <- value(inst, tb, type = 'nominal', scale = 1000000, digits = 2)
+      scenario_values$val <- val
+    }
+    
+    scenario_ls <- scenario_values_ls()
+    scenario_ls <- append(scenario_ls, list(scenario_values))
+    scenario_values_ls(scenario_ls)
+    
+  })
+  
+  observeEvent(input$ra_view, {
+    if(input$ra_view != ''){
+      scenario_id <- which(scenarios() == input$ra_view)
+      scenario_values <- scenario_values_ls()[[scenario_id]]
+      
+      output$ra_uiOutput <- renderUI({
+        tagList(
+          tabsetPanel(
+            tabPanel("Market",
+                     uiOutput("ra_market_uiOutput") %>% withSpinner(color = "gray")
+                     ),
+            tabPanel("Financial Statements",
+                     uiOutput("ra_financialStatements_uiOutput") %>% withSpinner(color = "gray")
+                     ),
+            tabPanel("Sensitivity",
+                     uiOutput("ra_sensitivity_uiOutput")
+                     )
+          )
+        )
+      })
+      
+      if(scenario_values$valueType == 'market'){
+        output$ra_market_uiOutput <- renderUI({
+          tagList(
+            fluidRow(
+              column(
+                width = 6,
+                plotOutput("ra_irr_yc_default_plot"),
+                verbatimTextOutput("ra_irr_yc_default_details")
+              ),
+              column(
+                width = 6,
+                plotOutput("ra_irr_yc_shifted_plot"),
+                verbatimTextOutput("ra_irr_yc_shifted_details")
+              ),
+            )
+          )
+        })
+        
+        output$ra_irr_yc_default_plot <- renderPlot({
+          plot(scenario_values$ycDefault)
+        })
+        
+        output$ra_irr_yc_default_details <- renderPrint({
+          print(scenario_values$ycDefault)
+        })
+        
+        output$ra_irr_yc_shifted_plot <- renderPlot({
+          plot(scenario_values$ycShifted)
+        })
+        
+        output$ra_irr_yc_shifted_details <- renderPrint({
+          print(scenario_values$ycShifted)
+        })
+      }else{
+        output$ra_market_uiOutput <- renderUI({
+          tagList(
+            p("This section is not applicable for nominal value view.")
+          )
+        })
+      }
+      
+      
+      output$ra_financialStatements_uiOutput <- renderUI({
+        tagList(
+          br(),
+          fluidRow(
+            column(
+              width = 12,
+              selectInput("ra_financial_statement_view", NULL, choices = c("Value", "Income"), width = "100%")
+            )
+          ),
+          fluidRow(
+            column(
+              width = 6,
+              verbatimTextOutput("ra_financial_statement_default")
+            ),
+            column(
+              width = 6,
+              verbatimTextOutput("ra_financial_statement_shifted")
+            ),
+          )
+        )
+      })
+    }
+  })
+  
+  observeEvent(input$ra_financial_statement_view, {
+    if(!is.null(input$ra_financial_statement_view)){
+      
+      scenario_id <- which(scenarios() == input$ra_view)
+      scenario_values <- scenario_values_ls()[[scenario_id]]
+      
+      if(input$ra_financial_statement_view == 'Value'){
+        output$ra_financial_statement_default <- renderPrint({
+          print(scenario_values$val)
+        })
+        
+        if(scenario_values$valueType == 'market'){
+          output$ra_financial_statement_shifted <- renderPrint({
+            print(scenario_values$valShifted)
+          })
+        }else{
+          output$ra_financial_statement_shifted <- NULL
+        }
+        
+      }else{
+        output$ra_financial_statement_default <- renderPrint({
+          print('Not calculated yet.')
+        })
+        if(scenario_values$valueType == 'market'){
+          output$ra_financial_statement_shifted <- renderPrint({
+            print(scenario_values$valShifted)
+          })
+        }else{
+          output$ra_financial_statement_shifted <- NULL
+        }
+        
+      }
+      
+    }
+  })
+  
   #---------------------------------------------------
   #---------------------Downloads---------------------
   #---------------------------------------------------
@@ -1094,7 +1448,7 @@ function(input, output, session) {
     datasetInput()
   }, options = list(scrollX = TRUE,
                     columnDefs = list(list(className = "nowrap", targets = "_all"))
-                    )
+  )
   )
   
   # Table documentation of selected dataset
@@ -1104,7 +1458,7 @@ function(input, output, session) {
     file.remove(temp)
     content
   })
-
+  
   
   # Downloadable csv of selected dataset
   output$downloadData <- downloadHandler(
@@ -1115,6 +1469,7 @@ function(input, output, session) {
       write.csv(datasetInput(), file, row.names = FALSE)
     }
   )
+  
   
   
   

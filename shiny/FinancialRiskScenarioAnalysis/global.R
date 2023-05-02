@@ -1,5 +1,6 @@
 library(shiny)
 library(shinythemes)
+library(shinycssloaders)
 library(DT)
 library(devtools)
 library(gbRd)
@@ -12,6 +13,7 @@ library(data.tree)
 library(utils)
 library(glue)
 library(tidyverse)
+install_github('hamzavig/FRSA')
 library("FRSA")
 
 # Define object styling using custom CSS
@@ -26,6 +28,10 @@ css <- "
 }
 
 div[data-value='Market'] {
+  margin-top: 20px !important;
+}
+
+div[data-value='Risk Analysis'] {
   margin-top: 20px !important;
 }
 

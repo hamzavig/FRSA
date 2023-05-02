@@ -98,7 +98,7 @@ fluidPage(
             )
           )
         ),
-        tabPanel("Institution",
+        tabPanel("Institutions",
           id = "institution",
           
           fluidRow(
@@ -147,8 +147,8 @@ fluidPage(
                 actionButton("ct_import", "Import Financial Contracts", width = "100%"),
                 p("- or -", style = "text-align: center;"),
                 br(),
-                selectInput("inst_account", "Account", choices = NULL),
-                selectInput("ct_type", "Contract Type",
+                selectInput("node", "Account", choices = NULL),
+                selectInput("contractType", "Contract Type",
                   choices = c(
                     "ANN",
                     "PAM",
@@ -157,33 +157,33 @@ fluidPage(
                   )
                 ),
                 conditionalPanel(
-                  condition = 'input.ct_type == "ANN" || input.ct_type == "PAM"',
+                  condition = 'input.contractType == "ANN" || input.ct_type == "PAM"',
                   fluidRow(
                     column(
                       width = 6,
-                      selectInput("ct_role", "Contract Role",
+                      selectInput("contractRole", "Contract Role",
                         choices = c(
                           "RPA",
                           "RPL"
                         )
                       ),
-                      selectInput("ct_dcc", "Day Count Convention",
+                      selectInput("dayCountConvention", "Day Count Convention",
                         choices = c(
-                          "30E60",
+                          "30E360",
                           "B252",
                           "A360",
                           "A365"
                         )
                       ),
-                      numericInput("ct_nom_prc", "Nominal Principal", value = 1000, step = 100, min = 100),
-                      numericInput("ct_nom_rate", "Nominal Interest Rate", value = 0.01, step = 0.001, min = 0.001, max = 1.0)
+                      numericInput("notionalPrincipal", "Nominal Principal", value = 1000, step = 100, min = 100),
+                      numericInput("nominalInterestRate", "Nominal Interest Rate", value = 0.01, step = 0.001, min = 0.001, max = 1.0)
                     ),
                     column(
                       width = 6,
-                      textInput("ct_id", "Contract Identifier", placeholder = "CTR0001"),
-                      dateInput("ct_ied", "Initial Exchange Date", value = Sys.Date(), format = "yyyy-mm-dd"),
-                      dateInput("ct_mtdt", "Maturity Date", value = Sys.Date(), format = "yyyy-mm-dd"),
-                      selectInput("ct_currency", "Currency",
+                      textInput("contractID", "Contract Identifier", placeholder = "CTR0001"),
+                      dateInput("initialExchangeDate", "Initial Exchange Date", value = Sys.Date(), format = "yyyy-mm-dd"),
+                      dateInput("maturityDate", "Maturity Date", value = "", format = "yyyy-mm-dd"),
+                      selectInput("currency", "Currency",
                         choices = c(
                           "CHF",
                           "USD",
@@ -196,7 +196,93 @@ fluidPage(
                     column(
                       width = 12,
                       br(),
-                      actionButton("rateResetToggle", "Rate Reset", icon = icon("plus"), width = "100%"),
+                      actionButton("calendarToggle", "Calendar", width = "100%"),
+                    )
+                  ),
+                  conditionalPanel(
+                    condition = "input.calendarToggle % 2 == 1",
+                    toggle = TRUE,
+                    fluidRow(
+                      column(
+                        width = 12,
+                        br(),
+                        selectInput("calendar", "Calendar", choices = c('NOCALENDAR')),
+                        selectInput("businessDayConvention", "Business Day Convention", choices = NULL),
+                        selectInput("endOfMonthConvention", "End Of Month Convention", choices = NULL)
+                      )
+                    )
+                  ),
+                  fluidRow(
+                    column(
+                      width = 12,
+                      br(),
+                      actionButton("contractIdentificationToggle", "Contract Identification", width = "100%"),
+                    )
+                  ),
+                  conditionalPanel(
+                    condition = "input.contractIdentificationToggle % 2 == 1",
+                    toggle = TRUE,
+                    fluidRow(
+                      column(
+                        width = 12,
+                        br(),
+                        dateInput("statusDate", "Status Date", value = "", format = "yyyy-mm-dd"),
+                        textInput("legalEntityIDRecordCreator", "Legal Entity ID Record Creator"),
+                        textInput("legalEntityIDCounterparty", "Legal Entity ID Counterparty"),
+                      )
+                    )
+                  ),
+                  fluidRow(
+                    column(
+                      width = 12,
+                      br(),
+                      actionButton("interestToggle", "Interest", width = "100%"),
+                    )
+                  ),
+                  conditionalPanel(
+                    condition = "input.interestToggle % 2 == 1",
+                    toggle = TRUE,
+                    fluidRow(
+                      column(
+                        width = 12,
+                        br(),
+                        dateInput("cycleAnchorDateOfInterestPayment", "Cycle Anchor Date of Interest Payment", value = "", format = "yyyy-mm-dd"),
+                        selectInput("cycleOfInterestPayment", "Cycle of Interest Payment", choices = c('P1YL0', 'P2YL0', 'P6ML0', 'P3ML0', 'P1ML0', 'None')),
+                        selectInput("cyclePointOfInterestPayment", "Cycle Point Of Interest Payment", choices = c('E', 'B')),
+                        numericInput("accruedInterest", "Accrued Interest", value = NULL, min = 0),
+                        
+                      )
+                    )
+                  ),
+                  fluidRow(
+                    column(
+                      width = 12,
+                      br(),
+                      actionButton("notionalPrincipalToggle", "NotionalPrincipal", width = "100%"),
+                    )
+                  ),
+                  conditionalPanel(
+                    condition = "input.notionalPrincipalToggle % 2 == 1",
+                    toggle = TRUE,
+                    fluidRow(
+                      column(
+                        width = 12,
+                        br(),
+                        dateInput("amortizationDate", "Amortization Date", value = "", format = "yyyy-mm-dd"),
+                        dateInput("contractDealDate", "Contract Deal Date", value = Sys.Date(), format = "yyyy-mm-dd"),
+                        dateInput("terminationDate", "Termination Date", value = "", format = "yyyy-mm-dd"),
+                        numericInput("premiumDiscountAtIED", "Premium Discount At IED", value = 0, min = 0),
+                        dateInput("cycleAnchorDateOfPrincipalRedemption", "Cycle Anchor Date Of Principal Redemption", value = "", format = "yyyy-mm-dd"),
+                        selectInput("cycleOfPrincipalRedemption", "Cycle Of Principal Redemption", choices = c('P1YL0', 'P2YL0', 'P6ML0', 'P3ML0', 'P1ML0', 'None'), selected = NULL, multiple = FALSE),
+                        numericInput("nextPrincipalRedemptionPayment", "Next Principal Redemption Payment", value = NULL, min = 0)
+                      )
+                    )
+                  ),
+                  fluidRow(
+                    column(
+                      width = 12,
+                      br(),
+                      actionButton("rateResetToggle", "Rate Reset", width = "100%"),
                     )
                   ),
                   conditionalPanel(
@@ -206,7 +292,12 @@ fluidPage(
                       column(
                         width = 12,
                         br(),
-                        selectInput("ct_moc", "Market Object Code of Rate Reset",
+                        dateInput("cycleAnchorDateOfRateReset", "Cycle Anchor Date of Rate Reset", value = "", format = "yyyy-mm-dd"),
+                        selectInput("cycleOfRateReset", "Cycle of Rate Reset", choices = c('None', 'P1YL0', 'P2YL0', 'P6ML0', 'P3ML0', 'P1ML0'), selected = NULL, multiple = FALSE),
+                        selectInput("cyclePointOfRateReset", "Cycle Point Of Rate Reset", choices = c('B', 'E')),
+                        numericInput("rateSpread", "Rate Spread", value = 0, step = 0.001, min = 0),
+                        numericInput("rateMultiplier", "Rate Multiplier", value = 1, step = 0.001, min = 1),
+                        selectInput("marketObjectCodeOfRateReset", "Market Object Code of Rate Reset",
                           choices = NULL
                         )
                       )
@@ -218,6 +309,7 @@ fluidPage(
                   p("Investments / OpCF fields")
                 ),
                 br(),
+                uiOutput("ct_single_notification"),
                 actionButton("ct_add", "Add Financial Contract", width = "100%")
               ),
               mainPanel(
@@ -297,7 +389,46 @@ fluidPage(
             )
           )
         ),
-        tabPanel("Risk Analysis")
+        tabPanel("Risk Analysis",
+                 id = "riskAnalysis",
+                 sidebarLayout(
+                   sidebarPanel(
+                     width = 3,
+                     selectInput("ra_inst", "Select Institution", choices = NULL),
+                     selectInput("ra_scenario", "Risk Scenario", choices = c("Interest Rate Risk", "Default Risk")),
+                     conditionalPanel(
+                       condition = "input.ra_scenario == 'Interest Rate Risk'",
+                       selectInput("ra_irr_value_view", "Value View", choices = c("nominal", "market")),
+                       conditionalPanel(
+                         condition = "input.ra_irr_value_view == 'market'",
+                         selectInput("ra_irr_moc", "Market Object", choices = NULL),
+                         p("Please add new Market Object in tab 'Market' if you wish to proceed with different Risk Factor Object for the valuation."),
+                         selectInput("ra_irr_scenario", "Interest Rate Risk Scenario", choices = c('Parallel Shift')),
+                         numericInput("ra_irr_shift_amount", "Shift Amount", value = 0.01, step = 0.001, min = 0, max = 1)
+                       ),
+                       selectInput("ra_irr_income_view", "Income View", choices = c("marginal", "cumulative")),
+                       dateInput("ra_irr_from", "From", value = as.Date(paste0(format(Sys.Date(), "%Y"), "-01-01")), format = "yyyy-mm-dd"),
+                       dateInput("ra_irr_to", "To", value = as.Date(paste0(format(Sys.Date() + years(1), "%Y"), "-01-01")), format = "yyyy-mm-dd")
+                     ),
+                     br(),
+                     actionButton("ra_start", "Start Risk Analysis", width = "100%")
+                   ),
+                   mainPanel(
+                     width = 9,
+                     fluidRow(
+                       column(
+                         width = 11,
+                         selectInput("ra_view", NULL, choices = NULL, width = '100%')
+                       ),
+                       column(
+                         width = 1,
+                         actionButton("ra_delete", "Delete", icon = icon("minus"), width = "100%")
+                       )
+                     ),
+                     uiOutput("ra_uiOutput")
+                   )
+                 )
+        )
       )
     ),
     tabPanel("Downloads",
