@@ -118,6 +118,62 @@ setMethod("plot", signature("DefaultCurve", "missing"),
             
           })
 
+
+#' @include YieldCurve.R
+#' @export
+#' @docType methods
+#' @rdname plt-methods
+#' 
+plotMultiShift <- function(rfs = list(), shifts = c()){
+  
+  title = "Parallel Shift"
+  labels = sapply(rfs, function(rf) get(rf, "label"))
+  legendValues = c()
+  
+  for(i in 1:length(labels)){
+    value = paste(labels[i], paste("shift:", shifts[i], sep = " "), sep = " - ")
+    legendValues = c(legendValues, value)
+  }
+  
+  t0 = get(rfs[[1]], "ReferenceDate")
+  tenors = get(rfs[[1]], "Tenors")
+  
+  rates = lapply(rfs, function(rf) get(rf, "Rates"))
+  
+  # construct time-axis
+  x.axis = timeDate(substring(t0,1,10))
+  for(t in tenors) {
+    x.axis = c(x.axis,
+               timeSequence(substring(t0, 1, 10),
+                            length.out=2, by=cycle.to.by(t))[2]
+    )
+  }
+  
+  # get y-lim
+  ylim = range(c(0, rates))
+  
+  # plot structure
+  plot(x=as.Date(x.axis), y=seq(from=0, to=max(sapply(rates, function(rate) max(rate))), by = max(sapply(rates, function(rate) max(rate)))/length(rates[[1]])), xaxt="n", type="n",
+       xlab="Tenors", ylim=ylim, ylab="Rates", main=title)
+  legend("bottom",
+         legend = legendValues,
+         lty = c(rep(1, length(legendValues))),
+         col = 1:length(legendValues)
+  )
+  # plot curve
+  pos = as.Date(x.axis)
+  lbl = c("t0", tenors)
+  for (i in 1:length(pos)) {
+    axis(1, at=pos[i], labels=lbl[i], tick=TRUE)
+  }
+  for (i in 1:length(rates)){
+    lines(x=as.Date(x.axis[-1]), y=rates[[i]], lwd=2, col = i)
+  }
+  
+}
+
+
+
 cycle.to.by <- function(x) {
   x = gsub("+", "", x)
   x = gsub("-", "", x)
