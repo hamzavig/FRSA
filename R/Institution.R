@@ -357,6 +357,71 @@ updateContract <- function(inst, node, ctid, term, value){
 }
 
 
+# ************************************************************
+# cloneInstitution(inst)
+# ************************************************************
+#' cloneInstitution
+#' 
+#' @export
+#' @rdname cloneInstitution
+#' 
+
+cloneInstitution <- function(inst){
+  
+  instNew <- Clone(inst)
+  instNew$name <- paste(inst$name, "Clone", sep = "")
+  
+  leaves <- instNew$leaves
+  
+  for (leaf in leaves){
+    leaf$contracts <- NULL
+  }
+  
+  ctrs <- getAllContracts(inst)
+  ctrsSplit <- split(ctrs, sapply(ctrs, function(ct) ct$contractTerms$contractType))
+  
+  dfs <- list()
+  
+  for(type in ctrsSplit){
+    
+    ctrs <- lapply(type, function(ct) ct$contractTerms)
+    
+    crid <- 1:length(ctrs)
+    df <- data.frame(crid)
+    
+    contractType <- ctrs[[1]]$contractType
+    contractTerms <- getContractTerms(contractType)
+    
+    for(term in contractTerms){
+      df[term] <- unlist(sapply(ctrs, function(ct) if(is.null(ct[[term]])) 'NULL' else ct[[term]]))
+    }
+    
+    df <- subset(df, select = -crid)
+    dfs <- append(dfs, list(df))
+    
+  }
+  
+  for (df in dfs){
+    
+    type <- if(df$contractType[1] %in% c('ANN', 'PAM')) 'contracts' else 'operations'
+    
+    if(type == 'contracts'){
+      ctrs <- contracts_df2list(df)
+    }else{
+      ctrs <- operations_df2list(df)
+    }
+    
+    ptf <- Portfolio()
+    ptf$contracts <- ctrs
+    
+    instNew <- assignContracts2Tree(instNew, ptf)
+  }
+  
+  return(instNew)
+}
+
+
+
 
 #' @include Events.R
 #' @include EventSeries.R
@@ -370,6 +435,7 @@ setMethod(f = "events", signature = c("Node", "missing", "RiskFactorConnector"),
             
             return(object)
           })
+
 
 # ************************************************************
 # addEvents(node)
