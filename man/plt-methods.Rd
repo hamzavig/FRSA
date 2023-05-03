@@ -4,12 +4,15 @@
 \name{plot,YieldCurve,missing-method}
 \alias{plot,YieldCurve,missing-method}
 \alias{plot,DefaultCurve,missing-method}
+\alias{plotMultiShift}
 \alias{plot,RiskFactor,ANY-method}
 \title{Plot a \link{YieldCurve, DefaultCurve}}
 \usage{
 \S4method{plot}{YieldCurve,missing}(x, y, ...)
 
 \S4method{plot}{DefaultCurve,missing}(x, y, ...)
+
+plotMultiShift(rfs = list(), shifts = c())
 
 \S4method{plot}{RiskFactor,ANY}(x, y, ...)
 }
