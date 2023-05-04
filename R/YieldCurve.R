@@ -292,7 +292,7 @@ setGeneric(name = "shiftYieldCurve",
 setMethod(f = "shiftYieldCurve", signature = c("YieldCurve", "vector"),
           definition = function(yc, shifts){
             
-            ycList <- list()
+            ycList <- list(yc)
             
             for(shift in shifts){
               
