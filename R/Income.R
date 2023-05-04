@@ -36,8 +36,6 @@
 #' @param by A sequence of 'timeDate's providing the target time-axis for the income-vector
 #'
 #' @param type A character representing the type of income (either 'marginal' or 'cumulative')
-#' 
-#' @param method A 'ValuationEngine' (or list thereof) giving the valuation methods used when computing the re-valuation gains as part of income
 #'    
 #' @param ... (optional) Use parameter 'revaluation.gains=FALSE' in order to return income solely from 
 #' interest/fee payments
@@ -95,12 +93,11 @@
 #' income(pam, by, "marginal", dcEngine, revaluation.gains=TRUE)
 #' income(pam, by, "cumulative", dcEngine, revaluation.gains=TRUE)
 #' 
-## @include 
 #' @export
 #' @docType methods
 #' @rdname inc-methods
 setGeneric(name = "income", 
-           def = function(object, by, type, revaluation.gains, method, ...){
+           def = function(object, by, type, ...){
   standardGeneric("income")
 })
 
@@ -112,7 +109,7 @@ setGeneric(name = "income",
 #' @export
 #' @rdname inc-methods
 setMethod(f = "income", 
-          signature = c("EventSeries", "timeBuckets", "character", "missing", "missing"),
+          signature = c("EventSeries", "timeBuckets", "character"),
           definition = function(object, by, type, ...) {
             return( income(object, as.timeDate(by), type, ...))
           })
@@ -122,7 +119,7 @@ setMethod(f = "income",
 #' @export
 #' @rdname inc-methods
 setMethod(f = "income", 
-          signature = c("EventSeries", "timeDate", "character", "missing", "missing"),
+          signature = c("EventSeries", "timeDate", "character"),
           definition = function(object, by, type, ...){
             
             pars=list(...)
@@ -136,79 +133,6 @@ setMethod(f = "income",
             }
             return(inc)
           })
-
-
-#' @include EventSeries.R
-#' @include TimeBuckets.R
-#' @export
-#' @rdname inc-methods
-setMethod(f = "income", 
-          signature = c("EventSeries", "timeBuckets", "character", "logical", "missing"),
-          definition = function(object, by, type, revaluation.gains, ...) {
-            return( income(object, as.timeDate(by), type, revaluation.gains, ...))
-          })
-
-#' @include EventSeries.R
-#' @export
-#' @rdname inc-methods
-setMethod(f = "income", 
-          signature = c("EventSeries", "timeDate", "character", "logical", "missing"),
-          definition = function(object, by, type, revaluation.gains, ...){
-            
-            pars=list(...)
-            if(type=="marginal") {
-              if( revaluation.gains ) {
-                stop("If 'revaluation.gains=TRUE', 'method' must be specified.")
-              } else {
-                inc = income.from.payments(object, by, ...) + 
-                  income.from.accruals.new(object, by, ...)
-              }
-            } else if(type=="cumulative") {
-              inc = cumsum(income(object, by, type="marginal", revaluation.gains, ...))
-            } else {
-              stop(paste("Income type '", type, "' not recognized!", sep=""))
-            }
-            return(inc)
-          })
-
-
-#' @include EventSeries.R
-#' @include DiscountingEngine.R
-#' @include TimeBuckets.R
-#' @export
-#' @rdname inc-methods
-setMethod(f = "income", 
-          signature = c("EventSeries", "timeBuckets", "character", "logical", "ValuationEngine"),
-          definition = function(object, by, type, revaluation.gains, method, ...) {
-            return( income(object, as.timeDate(by), type, revaluation.gains, method, ...))
-          })
-
-
-#' @include EventSeries.R
-#' @include DiscountingEngine.R
-#' @export
-#' @rdname inc-methods
-setMethod(f = "income", 
-          signature = c("EventSeries", "timeDate", "character", "logical", "ValuationEngine"),
-          definition = function(object, by, type, revaluation.gains, method, ...){
-            pars=list(...)
-            if(type=="marginal") {
-              if( revaluation.gains ) {
-                inc = income.from.payments(object, by, ...) + 
-                  income.from.revaluation.from.es(object, by, method, ...)
-              } else {
-                inc = income.from.payments(object, by, ...) + 
-                  income.from.accruals.new(object, by, ...)
-              }
-            } else if(type=="cumulative") {
-              inc = cumsum(income(object, by, type="marginal", revaluation.gains, 
-                                  method, ...))
-            } else {
-              stop(paste("Income type '", type, "' not recognized!", sep=""))
-            }
-            return(inc)
-          })
-
 
 
 # income from interest/fee
@@ -247,30 +171,4 @@ income.from.accruals.new = function(eventSeries, by, digits=2, ...) {
   ev.ts$nominalAccrued <- na.locf(ev.ts$nominalAccrued)
   deltaAccr <- c(diff(as.numeric(coredata(subset(ev.ts, type == "Accr")$nominalAccrued))))
   return(round(deltaAccr, digits))
-}
-
-
-
-# income from revaluation using eventSeries
-income.from.revaluation.from.es = function(eventSeries, by, method, digits=2, ...) {
-  # compute aggregate principal cash flows which are added/deducted
-  # from delta-market-values between by-times
-  times <- eventSeries$events_df$time
-  types <- eventSeries$events_df$type
-  payoffs <- eventSeries$events_df$payoff
-  pr.cf <- aggregate(
-    timeSeries(
-      c(rep(0, length(by)), payoffs[types %in% c("IED","PR","MD")]),
-      c(by, timeDate(substring(times[types %in% c("IED","PR","MD")], 1, 10)))
-    ), by = by, FUN = sum)
-  
-  # compute mark-to-model values
-  if (is.null(method)) {
-    vals <- FRSA::value(eventSeries, as.character(by), type = "market", digits = digits)
-  } else {
-    vals <- FRSA::value(eventSeries, as.character(by), type = "market", method = method, digits = digits)
-  }
-
-  inc <- as.numeric( diff(vals) + pr.cf[-1])
-  return(round(inc, digits))
 }
