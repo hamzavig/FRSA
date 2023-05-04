@@ -546,17 +546,13 @@ getContractsAsDataFrames <- function(institution, node, ...) {
 #' @include TimeBuckets.R
 #' @rdname val-methods
 #' @export
-setMethod(f = "value", signature = c("Node", "timeBuckets", "ANY"),
-          definition = function(object, by, type, method, scale=1, digits=2) {
-            
-            if (missing(method)) {
-              method <- DcEngine()
-            }
+setMethod(f = "value", signature = c("Node", "timeBuckets", "character"),
+          definition = function(object, by, type, scale=1, digits=2) {
+
             if (missing(type)) {
               type <- "nominal"
             }
-            res <- value(object, as.timeDate(by), type=type, method=method,
-                         scale=scale, digits=digits)
+            res <- value(object, as.timeDate(by), type=type, scale=scale, digits=digits)
             colnames(res) <- by@breakLabs
             return(res)
           })
@@ -565,19 +561,15 @@ setMethod(f = "value", signature = c("Node", "timeBuckets", "ANY"),
 #' @include Value.R
 #' @rdname val-methods
 #' @export
-setMethod(f = "value", signature = c("Node", "timeDate", "ANY"),
-          definition = function(object, by, type, method, scale=1, digits=2) {
-            if (missing(method)) {
-              method <- DcEngine()
-            }
+setMethod(f = "value", signature = c("Node", "timeDate", "character"),
+          definition = function(object, by, type, scale=1, digits=2) {
             if (missing(type)) {
               type <- "nominal"
             }
             # Compute value for whole tree
             clearAnalytics(object, "value")
             
-            object$Do(fun=fAnalytics, "value", by=as.character(by), type=type,
-                      method=method, filterFun=isLeaf)
+            object$Do(fun=fAnalytics, "value", by=as.character(by), type=type, filterFun=isLeaf)
             
             aggregateAnalytics(object, "value")
             
@@ -606,24 +598,16 @@ setMethod(f = "value", signature = c("Node", "timeDate", "ANY"),
 #' @include TimeBuckets.R
 #' @rdname inc-methods
 #' @export
-setMethod(f = "income", signature = c("Node", "timeBuckets", "ANY"),
-          definition = function(object, by, type, revaluation.gains, 
-                                method, scale=1, digits=2){
-            
-            # Compute income for whole tree
-            if (missing(method)) {
-              method <- DcEngine()
-            }
+setMethod(f = "income", signature = c("Node", "timeBuckets", "character"),
+          definition = function(object, by, type, scale=1, digits=2){
+
             if (missing(type)) {
               type <- "marginal"
             }
-            if (missing(revaluation.gains)) {
-              revaluation.gains <- FALSE
-            }
+
             clearAnalytics(object, "income")
             
-            object$Do(fun=fAnalytics, "income", by=by, type=type, method=method, 
-                      revaluation.gains=revaluation.gains, filterFun=isLeaf)
+            object$Do(fun=fAnalytics, "income", by=by, type=type, filterFun=isLeaf)
             
             aggregateAnalytics(object, "income")
             
@@ -644,7 +628,7 @@ setMethod(f = "income", signature = c("Node", "timeBuckets", "ANY"),
 #' @include Liquidity.R
 #' @rdname liq-methods
 #' @export
-setMethod(f = "liquidity", signature = c("Node", "timeBuckets", "ANY"),
+setMethod(f = "liquidity", signature = c("Node", "timeBuckets", "character"),
           definition = function(object, by, type, scale=1, digits=2){
             if (missing(type)) {
               type <- "marginal"
