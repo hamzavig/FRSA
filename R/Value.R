@@ -34,17 +34,14 @@
 #'
 #' @param type A character representing the type of value (either 'nominal' or 'market')
 #' 
-#' @param method (optional) for type='market' a 'ValuationEngine' can be specified according to which the value is computed
-#' 
 #' @param ... Currently unused
 #' 
 #' @include EventSeries.R 
-#' @include DiscountingEngine.R
 #' @export
 #' @docType methods
 #' @rdname val-methods
 
-setGeneric(name = "value", def = function(object, by, type, method, ...){
+setGeneric(name = "value", def = function(object, by, type, ...){
   standardGeneric("value")
 })
 
@@ -54,49 +51,7 @@ setGeneric(name = "value", def = function(object, by, type, method, ...){
 #' @include EventSeries.R
 #' @export
 #' @rdname val-methods
-setMethod(f = "value", signature = c("EventSeries", "character", "character", "DiscountingEngine"),
-          definition = function(object, by, type, method, digits = 2, ...){
-            if(type=="nominal") {
-              val = FRSA::value(object, by, "nominal", digits=digits, ...)
-            } else if (type %in% c("market")) {
-              # add spread to interest rate
-              spread <- FRSA::get(method, "dc.spread")
-              dc <- FRSA::get(method, "dc.object")
-              FRSA::set(dc, list(Rates=FRSA::get(dc, "Rates") + spread))
-              val = sapply(by, function(ad) { # loop over elements in "by"
-                evs = data.frame(
-                  object$events_df$time,
-                  object$events_df$payoff,
-                  object$events_df$type
-                )
-                colnames(evs) = c("times", "values", "types")
-                evs$times = timeDate(evs$times)
-                evs.sub = subset(evs, times >= timeDate(ad))
-                evs.sub <- subset(evs.sub, !(evs.sub$types %in% c("DPR")))
-                if( nrow(evs.sub)==0 | sum(evs.sub$types %in% c("IED","PRD")) > 0) {
-                  # added condition that npv is 0 if ad is earlier than IED
-                  # (execution of contract has not yet started)
-                  return(0.0)
-                } else {
-                  cfs = evs.sub$values
-                  dts = as.character(evs.sub$times)
-                  dfs = FRSA::discountFactors(dc, from=ad, to=dts)
-                  return( as.numeric (cfs%*%dfs ))
-                }
-              })
-              # rebase yield curve
-              set(dc, list(Rates=get(dc, "Rates")-spread)) # TODO: implement discounting more consistently
-            } else {
-              stop(paste("Value type '", type, "' not recognized!", sep=""))
-            }
-            return(round(val, digits))
-          
-          })
-
-
-#' @export
-#' @rdname val-methods
-setMethod(f = "value", signature = c("EventSeries", "character", "character", "missing"),
+setMethod(f = "value", signature = c("EventSeries", "character", "character"),
           definition = function(object, by, type, digits = 2, ...){
             if(type=="nominal") {
               val = sapply(by, function(ad) {
@@ -114,49 +69,40 @@ setMethod(f = "value", signature = c("EventSeries", "character", "character", "m
                 evs.last = evs.sub[which(evs.sub$times==max(evs.sub$times)),]
                 return(evs.last$values[nrow(evs.last)])
               })
-            } else if( type %in% c("market") ) {
-              stop("Please specify argument 'method' when computing 'market' for an EventSeries!")
+            } else if(type %in% c("market")) {
+              
+              if(length(object$riskFactors) != 0){
+                yc <- object$riskFactors[[1]]
+              }else{
+                yc <- NULL
+              }
+              
+              val = sapply(by, function(ad) { # loop over elements in "by"
+                evs = data.frame(
+                  object$events_df$time,
+                  object$events_df$payoff,
+                  object$events_df$type
+                )
+                colnames(evs) = c("times", "values", "types")
+                evs$times = timeDate(evs$times)
+                evs.sub = subset(evs, times >= timeDate(ad))
+                evs.sub <- subset(evs.sub, !(evs.sub$types %in% c("DPR")))
+                if( nrow(evs.sub)==0 | sum(evs.sub$types %in% c("IED","PRD")) > 0) {
+                  # execution of contract has not yet started
+                  return(0.0)
+                } else {
+                  cfs = evs.sub$values
+                  if(!is.null(yc)){
+                    dts = as.character(evs.sub$times)
+                    dfs = discountFactors(yc, from=ad, to=dts)
+                    return(as.numeric(cfs%*%dfs))
+                  }else{
+                    return(as.numeric(cfs))
+                  }
+                }
+              })
             } else {
               stop(paste("Value type '", type, "' not recognized!", sep=""))
             }
             return(round(val, digits))
-          })
-
-#' @export
-#' @rdname val-methods
-setGeneric(name = "valueEquityRatio", def = function(object, ...){
-  standardGeneric("valueEquityRatio")
 })
-
-
-#' The equity ratio is computed from the value data.frame
-#' @export
-#' @rdname val-methods
-setMethod(f = "valueEquityRatio", signature = c("data.frame"),
-          definition = function(object, ...){
-            
-            ratio <- round(100*(-object[grep("-Equity",rownames(object)),]/object[grep("-Assets",rownames(object)),]),2)
-            rownames(ratio) <- "Equity Ratio"
-            return(ratio)
-            
-          })
-
-#' @export
-#' @rdname val-methods
-setGeneric(name = "valueLiquidityCoverageRatio", def = function(object, ...){
-  standardGeneric("valueLiquidityCoverageRatio")
-})
-
-
-#' The equity ratio is computed from the value data.frame
-#' @export
-#' @rdname val-methods
-setMethod(f = "valueLiquidityCoverageRatio", signature = c("data.frame"),
-          definition = function(object, ...){
-            
-            ratio <- round(100*(-(object[grep("-Assets",rownames(object))+1,])/object[grep("-Liabilities",rownames(object))+1,]),2)
-            rownames(ratio) <- "Liquiditiy Coverage Ratio"
-            return(ratio)
-            
-          })
-
