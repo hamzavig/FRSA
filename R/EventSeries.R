@@ -114,7 +114,7 @@ setMethod(f = "EventSeries", signature = c("ContractType", "character", "RiskFac
             evs$contractID <- object$contractTerms$contractID
             evs$contractType <- object$contractTerms$contractType
             evs$statusDate <-  object$contractTerms$statusDate
-            evs$riskFactors <- list(factor)
+            evs$riskFactors <- if(length(riskFactor) != 0) factor else list()
 
             # construct the 7 columns with event list data (no long loops please)
             # initialize the data.frame with a row index evid
