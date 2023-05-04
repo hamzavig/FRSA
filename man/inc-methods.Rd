@@ -3,30 +3,18 @@
 \docType{methods}
 \name{income}
 \alias{income}
-\alias{income,EventSeries,timeBuckets,character,missing,missing-method}
-\alias{income,EventSeries,timeDate,character,missing,missing-method}
-\alias{income,EventSeries,timeBuckets,character,logical,missing-method}
-\alias{income,EventSeries,timeDate,character,logical,missing-method}
-\alias{income,EventSeries,timeBuckets,character,logical,ValuationEngine-method}
-\alias{income,EventSeries,timeDate,character,logical,ValuationEngine-method}
-\alias{income,Node,timeBuckets,ANY,ANY,ANY-method}
+\alias{income,EventSeries,timeBuckets,character-method}
+\alias{income,EventSeries,timeDate,character-method}
+\alias{income,Node,timeBuckets,character-method}
 \title{Derive the income-vector for \code{ContractType}}
 \usage{
-income(object, by, type, revaluation.gains, method, ...)
+income(object, by, type, ...)
 
-\S4method{income}{EventSeries,timeBuckets,character,missing,missing}(object, by, type, revaluation.gains, method, ...)
+\S4method{income}{EventSeries,timeBuckets,character}(object, by, type, ...)
 
-\S4method{income}{EventSeries,timeDate,character,missing,missing}(object, by, type, revaluation.gains, method, ...)
+\S4method{income}{EventSeries,timeDate,character}(object, by, type, ...)
 
-\S4method{income}{EventSeries,timeBuckets,character,logical,missing}(object, by, type, revaluation.gains, method, ...)
-
-\S4method{income}{EventSeries,timeDate,character,logical,missing}(object, by, type, revaluation.gains, method, ...)
-
-\S4method{income}{EventSeries,timeBuckets,character,logical,ValuationEngine}(object, by, type, revaluation.gains, method, ...)
-
-\S4method{income}{EventSeries,timeDate,character,logical,ValuationEngine}(object, by, type, revaluation.gains, method, ...)
-
-\S4method{income}{Node,timeBuckets,ANY,ANY,ANY}(object, by, type, revaluation.gains, method, scale = 1, digits = 2)
+\S4method{income}{Node,timeBuckets,character}(object, by, type, scale = 1, digits = 2)
 }
 \arguments{
 \item{object}{The \code{ContractType} or \code{EventSeries}-object for which to derive the income-vector}
@@ -34,8 +22,6 @@ income(object, by, type, revaluation.gains, method, ...)
 \item{by}{A sequence of 'timeDate's providing the target time-axis for the income-vector}
 
 \item{type}{A character representing the type of income (either 'marginal' or 'cumulative')}
-
-\item{method}{A 'ValuationEngine' (or list thereof) giving the valuation methods used when computing the re-valuation gains as part of income}
 
 \item{...}{(optional) Use parameter 'revaluation.gains=FALSE' in order to return income solely from 
 interest/fee payments}

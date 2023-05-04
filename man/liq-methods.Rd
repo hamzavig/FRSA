@@ -7,7 +7,7 @@
 \alias{liquidity,EventSeries,timeDate,missing-method}
 \alias{liquidity,EventSeries,timeBuckets,character-method}
 \alias{liquidity,EventSeries,timeDate,character-method}
-\alias{liquidity,Node,timeBuckets,ANY-method}
+\alias{liquidity,Node,timeBuckets,character-method}
 \title{Derive the liquidity-vector for \code{ContractType}}
 \usage{
 liquidity(object, by, type, ...)
@@ -20,7 +20,7 @@ liquidity(object, by, type, ...)
 
 \S4method{liquidity}{EventSeries,timeDate,character}(object, by, type, digits = 2)
 
-\S4method{liquidity}{Node,timeBuckets,ANY}(object, by, type, scale = 1, digits = 2)
+\S4method{liquidity}{Node,timeBuckets,character}(object, by, type, scale = 1, digits = 2)
 }
 \arguments{
 \item{object}{The \code{ContractType} or \code{EventSeries}-object for which to derive the liquidity-vector}

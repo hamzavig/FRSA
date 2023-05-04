@@ -3,33 +3,18 @@
 \docType{methods}
 \name{value}
 \alias{value}
-\alias{value,EventSeries,character,character,DiscountingEngine-method}
-\alias{value,EventSeries,character,character,missing-method}
-\alias{valueEquityRatio}
-\alias{valueEquityRatio,data.frame-method}
-\alias{valueLiquidityCoverageRatio}
-\alias{valueLiquidityCoverageRatio,data.frame-method}
-\alias{value,Node,timeBuckets,ANY,ANY-method}
-\alias{value,Node,timeDate,ANY,ANY-method}
+\alias{value,EventSeries,character,character-method}
+\alias{value,Node,timeBuckets,character-method}
+\alias{value,Node,timeDate,character-method}
 \title{Derive the value at AD0 of a contract}
 \usage{
-value(object, by, type, method, ...)
+value(object, by, type, ...)
 
-\S4method{value}{EventSeries,character,character,DiscountingEngine}(object, by, type, method, digits = 2, ...)
+\S4method{value}{EventSeries,character,character}(object, by, type, digits = 2, ...)
 
-\S4method{value}{EventSeries,character,character,missing}(object, by, type, digits = 2, ...)
+\S4method{value}{Node,timeBuckets,character}(object, by, type, scale = 1, digits = 2)
 
-valueEquityRatio(object, ...)
-
-\S4method{valueEquityRatio}{data.frame}(object, ...)
-
-valueLiquidityCoverageRatio(object, ...)
-
-\S4method{valueLiquidityCoverageRatio}{data.frame}(object, ...)
-
-\S4method{value}{Node,timeBuckets,ANY,ANY}(object, by, type, method, scale = 1, digits = 2)
-
-\S4method{value}{Node,timeDate,ANY,ANY}(object, by, type, method, scale = 1, digits = 2)
+\S4method{value}{Node,timeDate,character}(object, by, type, scale = 1, digits = 2)
 }
 \arguments{
 \item{object}{object The \code{ContractType} or \code{EventSeries}-object for which to derive the value}
@@ -37,8 +22,6 @@ valueLiquidityCoverageRatio(object, ...)
 \item{by}{time as per which to compute the value}
 
 \item{type}{A character representing the type of value (either 'nominal' or 'market')}
-
-\item{method}{(optional) for type='market' a 'ValuationEngine' can be specified according to which the value is computed}
 
 \item{...}{Currently unused}
 }
