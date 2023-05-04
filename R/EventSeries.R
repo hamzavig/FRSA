@@ -54,47 +54,34 @@ setMethod(f = "EventSeries", signature = c("ContractType", "character", "RiskFac
             
             # prepare list in necessary structure to pass to JSON generator
             contractDefs <- lapply(contracts,preJcontract)
-            riskFactorsList <- list()
             
-            if (length(riskFactors$riskfactors) > 0) {
-              for (i in 1:length(riskFactors$riskfactors)) {
-                  factor <- riskFactors$riskfactors[[i]]
-                  
-                  
-                  if ("cycleAnchorDateOfRateReset" %in% names(contracts[[1]]$contractTerms)){
-                    anchor_dt <- contracts[[1]]$contractTerms$cycleAnchorDateOfRateReset
-                  }else{
-                    anchor_dt <- factor$ReferenceDate
-                  }
-                  
-                  if ("cycleOfRateReset" %in% names(contracts[[1]]$contractTerms)){
-                    cycle <- contracts[[1]]$contractTerms$cycleOfRateReset
-                  }else{
-                    cycle <- "P1YL1"
-                  }
-                  
-                  mat <- contracts[[1]]$contractTerms$maturityDate
-                  if (mat=="NULL"){
-                    mat <- as.character(ymd(anchor_dt) %m+% years(30))
-                  }
-                  
-                  factor$Data <- get.data.rate.reset(factor, anchor_dt, cycle, mat)
-                  
-                  temp_list <- list(marketObjectCode = factor$label)
-                  if (is(factor, "YieldCurve")) {
-                    temp_list$base <- 1
-                  } else {
-                    temp_list$base <- factor$Data$Values[1]
-                  }
-                  temp_list$data <- data.frame(time = rownames(factor$Data), 
-                                               value =  as.character(factor$Data$Values))
-                  temp_list$data$time <- paste0(temp_list$data$time,"T00:00:00")
-                  riskFactorsList[[i]] <- temp_list
+            if("marketObjectCodeOfRateReset" %in% names(contracts[[1]]$contractTerms)
+               && contracts[[1]]$contractTerms$marketObjectCodeOfRateReset > ''){
+              
+              moc <- contracts[[1]]$contractTerms$marketObjectCodeOfRateReset
+              factor <- riskFactors$riskfactors[[moc]]
+              anchor_dt <- contracts[[1]]$contractTerms$cycleAnchorDateOfRateReset
+              cycle <- contracts[[1]]$contractTerms$cycleOfRateReset
+              mat <- contracts[[1]]$contractTerms$maturityDate
+              
+              factor$Data <- get.data.rate.reset(factor, anchor_dt, cycle, mat)
+              riskFactor <- list(marketObjectCode = factor$label)
+              
+              if (is(factor, "YieldCurve")) {
+                riskFactor$base <- 1
+              } else {
+                riskFactor$base <- factor$Data$Values[1]
               }
+              riskFactor$data <- data.frame(time = rownames(factor$Data), 
+                                           value =  as.character(factor$Data$Values))
+              riskFactor$data$time <- paste0(riskFactor$data$time,"T00:00:00")
+              riskFactor <- list(riskFactor)
+            }else{
+              riskFactor <- list()
             }
             
             fin_list <- list(contracts = contractDefs,
-                             riskFactors = riskFactorsList)
+                             riskFactors = riskFactor)
             
             # create final request body in json format
             request_body <- toJSON(fin_list, pretty = TRUE, auto_unbox = TRUE)
@@ -127,7 +114,7 @@ setMethod(f = "EventSeries", signature = c("ContractType", "character", "RiskFac
             evs$contractID <- object$contractTerms$contractID
             evs$contractType <- object$contractTerms$contractType
             evs$statusDate <-  object$contractTerms$statusDate
-            evs$riskFactors <- riskFactorsList
+            evs$riskFactors <- list(factor)
 
             # construct the 7 columns with event list data (no long loops please)
             # initialize the data.frame with a row index evid
