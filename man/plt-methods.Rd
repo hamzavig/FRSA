@@ -12,7 +12,7 @@
 
 \S4method{plot}{DefaultCurve,missing}(x, y, ...)
 
-plotMultiShift(rfs = list(), shifts = c())
+plotMultiShift(rfs = list())
 
 \S4method{plot}{RiskFactor,ANY}(x, y, ...)
 }

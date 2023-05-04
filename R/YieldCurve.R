@@ -282,21 +282,31 @@ setMethod(f = "names", signature = c("YieldCurve"),
 #' @rdname yc-methods
 #'
 setGeneric(name = "shiftYieldCurve",
-           def = function(yc, spread){
+           def = function(yc, shifts){
                standardGeneric("shiftYieldCurve")
            })
 
 #' @export
 #' @rdname yc-methods
 #' 
-setMethod(f = "shiftYieldCurve", signature = c("YieldCurve", "numeric"),
-          definition = function(yc, spread){
+setMethod(f = "shiftYieldCurve", signature = c("YieldCurve", "vector"),
+          definition = function(yc, shifts){
             
-            rates <- get(yc, "Rates")
-            rates <- rates + spread
-            set(yc, list(Rates=rates))
+            ycList <- list()
             
-            return(yc)
+            for(shift in shifts){
+              
+              ycShifted <- YieldCurve(
+                label = paste(yc$label, "shifted by", shift, sep = " "),
+                ReferenceDate = yc$ReferenceDate,
+                Tenors = yc$Tenors,
+                Rates = get(yc, "Rates") + shift
+              )
+              ycList <- append(ycList, ycShifted)
+            } 
+            
+            return(ycList)
+            
           })
 
 
