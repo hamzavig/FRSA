@@ -429,7 +429,7 @@ switchMarketObjects <- function(inst, ycsOriginal, ycsShifted){
   ycsOriginalNames <- sapply(ycsOriginal, function(yc) yc$label)
   
   for(ct in ctrs){
-    if('marketObjectCodeOfRateReset' %in% names(ct$contracTerms)  &&
+    if('marketObjectCodeOfRateReset' %in% names(ct$contractTerms)  &&
        ct$contractTerms$marketObjectCodeOfRateReset %in% ycsOriginalNames){
       ycId <- which(ycsOriginalNames == ct$contractTerms$marketObjectCodeOfRateReset)
       ct$contractTerms$marketObjectCodeOfRateReset <- ycsShifted[[ycID]]$label
