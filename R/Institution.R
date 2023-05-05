@@ -416,6 +416,21 @@ cloneInstitution <- function(inst){
 
 
 
+switchMarketObjects <- function(inst, ycsOriginal, ycsShifted){
+  
+  ctrs <- getAllContracts(inst)
+  ycsOriginalNames <- sapply(ycsOriginal, function(yc) yc$label)
+  
+  for(ct in ctrs){
+    if(ct$contractTerms$marketObjectOfRateReset %in% ycsOriginalNames){
+      ycId <- which(ycsOriginalNames == ct$contractTerms$marketObjectOfRateReset)
+      ct$contractTerms$marketObjectOfRateReset <- ycsShifted[[ycID]]$label
+    }
+  }
+  
+  return(inst)
+}
+
 
 #' @include Events.R
 #' @include EventSeries.R
