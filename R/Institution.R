@@ -415,7 +415,14 @@ cloneInstitution <- function(inst){
 }
 
 
-
+# ************************************************************
+# switchMarketObjects(inst, ycOriginal, ycShifted)
+# ************************************************************
+#' switchMarketObjects
+#' 
+#' @export
+#' @rdname switchMarketObjects
+#' 
 switchMarketObjects <- function(inst, ycsOriginal, ycsShifted){
   
   ctrs <- getAllContracts(inst)
