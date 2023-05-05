@@ -97,7 +97,7 @@ setMethod(f = "value", signature = c("EventSeries", "character", "character"),
                     dfs = discountFactors(yc, from=ad, to=dts)
                     return(as.numeric(cfs%*%dfs))
                   }else{
-                    return(as.numeric(cfs))
+                    return(as.numeric(cfs%*%rep(1, length(cfs))))
                   }
                 }
               })
