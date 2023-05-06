@@ -180,7 +180,7 @@ plotMultiShift <- function(rfs = list()){
          xpd = TRUE,
          horiz = TRUE,
          bty = "n",
-         inset = c(0, -0.35)
+         inset = c(0, -1)
   )
   
 }
