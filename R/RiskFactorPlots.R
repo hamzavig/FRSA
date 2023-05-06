@@ -146,6 +146,9 @@ plotMultiShift <- function(rfs = list()){
   # get y-lim
   ylim = range(c(0, max(sapply(rates, function(rate) max(rate)))))
   
+  # Set margin size for plot box
+  par(mar = c(5, 4, 4, 6) + 0.1)
+  
   # plot structure
   plot(x=as.Date(x.axis), 
        y=seq(from=0,
