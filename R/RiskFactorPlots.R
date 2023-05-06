@@ -175,8 +175,9 @@ plotMultiShift <- function(rfs = list()){
          lty = c(rep(1, length(labels))),
          col = 1:length(labels),
          xpd = TRUE,
+         ncol = 2,
          bty = "n",
-         inset = c(0, -0.1)
+         inset = c(0, -1)
   )
   
 }
