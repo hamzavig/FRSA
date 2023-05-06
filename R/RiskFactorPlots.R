@@ -126,7 +126,7 @@ setMethod("plot", signature("DefaultCurve", "missing"),
 #' 
 plotMultiShift <- function(rfs = list()){
   
-  title = "Parallel Shift"
+  title = paste("Parallel Shift", rfs[[1]]$label)
   labels = sapply(rfs, function(rf) get(rf, "label"))
   
   t0 = get(rfs[[1]], "ReferenceDate")
