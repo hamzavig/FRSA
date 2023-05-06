@@ -159,12 +159,6 @@ plotMultiShift <- function(rfs = list()){
        main=title
   )
   
-  legend("bottom",
-         legend = labels,
-         lty = c(rep(1, length(labels))),
-         col = 1:length(labels)
-  )
-  
   # plot curve(s)
   pos = as.Date(x.axis)
   lbl = c("t0", tenors)
@@ -174,6 +168,16 @@ plotMultiShift <- function(rfs = list()){
   for (i in 1:length(rates)){
     lines(x=as.Date(x.axis[-1]), y=rates[[i]], lwd=2, col = i)
   }
+  
+  par(xpd = TRUE)
+  legend("bottom",
+         legend = labels,
+         lty = c(rep(1, length(labels))),
+         col = 1:length(labels),
+         xpd = TRUE,
+         bty = "n",
+         inset = c(0, -0.1)
+  )
   
 }
 
