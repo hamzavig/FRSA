@@ -4,20 +4,20 @@
 \name{default}
 \alias{default}
 \alias{generateDefaultContracts}
-\alias{generateDefaultContracts,ContractType,list,character,data.frame-method}
-\alias{default,Node,list,character,list-method}
+\alias{generateDefaultContracts,ContractType,list,character,data.frame,numeric-method}
+\alias{default,Node,list,character,numeric-method}
 \alias{determineDefault}
 \title{Default}
 \usage{
-default(object, defaults, from, rawCtrs, ...)
+default(object, defaults, from, recoveryRate, ...)
 
-generateDefaultContracts(object, defaults, from, ctr, ...)
+generateDefaultContracts(object, defaults, from, ctr, recoveryRate, ...)
 
-\S4method{generateDefaultContracts}{ContractType,list,character,data.frame}(object, defaults, from, ctr)
+\S4method{generateDefaultContracts}{ContractType,list,character,data.frame,numeric}(object, defaults, from, ctr, recoveryRate)
 
-\S4method{default}{Node,list,character,list}(object, defaults, from, rawCtrs)
+\S4method{default}{Node,list,character,numeric}(object, defaults, from, recoveryRate)
 
-determineDefault(node, defaults, from, rawCtrs)
+determineDefault(node, defaults, from, recoveryRate)
 }
 \arguments{
 \item{object}{object The \code{Institution}-object for which the contracts indicate a default risk}

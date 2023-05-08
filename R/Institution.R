@@ -432,7 +432,7 @@ switchMarketObjects <- function(inst, ycsOriginal, ycsShifted){
     if('marketObjectCodeOfRateReset' %in% names(ct$contractTerms)  &&
        ct$contractTerms$marketObjectCodeOfRateReset %in% ycsOriginalNames){
       ycId <- which(ycsOriginalNames == ct$contractTerms$marketObjectCodeOfRateReset)
-      ct$contractTerms$marketObjectCodeOfRateReset <- ycsShifted[[ycId]]$label
+      ct$contractTerms$marketObjectCodeOfRateReset <- ycsShifted[[ycId ]]$label
     }
   }
   
@@ -677,15 +677,15 @@ setMethod(f = "liquidity", signature = c("Node", "timeBuckets", "character"),
 #' @rdname def-methods
 #' @export
 #' 
-setMethod(f = "default", signature = c("Node", "list", "character", "list"),
-          definition = function(object, defaults, from, rawCtrs){
+setMethod(f = "default", signature = c("Node", "list", "character", "numeric"),
+          definition = function(object, defaults, from, recoveryRate){
             
             leafs <- object$Assets$leaves
             leafs[length(leafs)] <- NULL
             defCtrs <- list()
             
             for(leaf in leafs){
-              ctrs <- determineDefault(leaf, defaults, from, rawCtrs)
+              ctrs <- determineDefault(leaf, defaults, from, recoveryRate)
               
               for(j in 1:length(ctrs)){
                 defCtrs <- append(defCtrs, ctrs[[j]])
@@ -702,7 +702,7 @@ setMethod(f = "default", signature = c("Node", "list", "character", "list"),
 #' @rdname def-methods
 #' @export
 #' 
-determineDefault <- function(node, defaults, from, rawCtrs){
+determineDefault <- function(node, defaults, from, recoveryRate){
   
   ctrList <- list()
   
@@ -716,20 +716,18 @@ determineDefault <- function(node, defaults, from, rawCtrs){
       if(ctr$contractTerms$legalEntityIDCounterparty %in% defaultLabels &&
          ctr$contractTerms$maturityDate > from){
         
-        cid <- ctr$contractTerms$contractID
+        contractTerms <- getContractTerms(ctr$contractTerms$contractType)
         
-        for(i in 1:length(rawCtrs)){
-          ctrdf <- rawCtrs[[i]]
-          
-          if(cid %in% ctrdf[,"contractID"]){
-            rawCtr <- ctrdf[ctrdf$contractID == cid,]
-            break
-          }else{
-            next
-          }
+        crid <- 1:length(ctr)
+        ctrDf <- data.frame(crid)
+        
+        for(term in contractTerms) {
+          ctrDf[term] <- if(is.null(ctr$contractTerms[[term]])) 'NULL' else ctr$contractTerms[[term]]
         }
         
-        defCtrs <- generateDefaultContracts(ctr, defaults, from, rawCtr)
+        ctrDf <- subset(ctrDf, select = -crid)
+        
+        defCtrs <- generateDefaultContracts(ctr, defaults, from, ctrDf, recoveryRate)
         
         for(j in 1:length(defCtrs)){
           

@@ -11,14 +11,14 @@
 #' @docType methods
 #' @rdname def-methods
 
-setGeneric(name = "default", def = function(object, defaults, from, rawCtrs, ...){
+setGeneric(name = "default", def = function(object, defaults, from, recoveryRate, ...){
   standardGeneric("default")
 })
 
 #' @rdname def-methods
 #' @export
 #' 
-setGeneric(name = "generateDefaultContracts", def = function(object, defaults, from, ctr, ...){
+setGeneric(name = "generateDefaultContracts", def = function(object, defaults, from, ctr, recoveryRate, ...){
   standardGeneric("generateDefaultContracts")
 })
 
@@ -27,8 +27,8 @@ setGeneric(name = "generateDefaultContracts", def = function(object, defaults, f
 #' @rdname def-methods
 #' @export
 #' 
-setMethod(f = "generateDefaultContracts", signature = c("ContractType", "list", "character", "data.frame"),
-          definition = function(object, defaults, from, ctr){
+setMethod(f = "generateDefaultContracts", signature = c("ContractType", "list", "character", "data.frame", "numeric"),
+          definition = function(object, defaults, from, ctr, recoveryRate){
             
             ctrInitialExchangeDate <- object$contractTerms$initialExchangeDate
             ctrMaturityDate <- object$contractTerms$maturityDate
@@ -41,12 +41,7 @@ setMethod(f = "generateDefaultContracts", signature = c("ContractType", "list", 
             defaultCurve <- defaults[[dcIdx]]
             defaultDates <- as.character(timeSequence(from = from, to = ctrMaturityDate, by = "1 years"))
             defaultRates <- getRatesAsSeries(defaultCurve, defaultDates)
-            
-            paymentsPassed <- yearFraction(ctrInitialExchangeDate, from, "30E360")
-            paymentsPending <- yearFraction(from, ctrMaturityDate, "30E360")
-            paymentsTotal <- paymentsPassed + paymentsPending
-            
-            recoveryRate <- paymentsPassed/paymentsTotal
+
             defaultGivenRisk <- (1-recoveryRate)
             
             premiumDiscount <- defaultGivenRisk*defaultRates
