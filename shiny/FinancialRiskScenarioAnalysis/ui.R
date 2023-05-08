@@ -115,12 +115,16 @@ fluidPage(
             conditionalPanel(
               condition = 'output.inst_panel == true',
               column(
-                width = 8,
+                width = 7,
                 selectInput("inst_view", NULL, choices = NULL, width = '100%')
               ),
               column(
                 width = 1,
-                actionButton("inst_delete", "Delete", icon = icon("minus"), width = "100%")
+                actionButton("inst_delete", "Delete", width = "100%")
+              ),
+              column(
+                width = 1,
+                actionButton("inst_clone", "Clone", width = "100%")
               )
             )
           ),
@@ -398,18 +402,35 @@ fluidPage(
                      selectInput("ra_scenario", "Risk Scenario", choices = c("Interest Rate Risk", "Default Risk")),
                      conditionalPanel(
                        condition = "input.ra_scenario == 'Interest Rate Risk'",
-                       selectInput("ra_irr_value_view", "Value View", choices = c("nominal", "market")),
-                       conditionalPanel(
-                         condition = "input.ra_irr_value_view == 'market'",
-                         selectInput("ra_irr_moc", "Market Object", choices = NULL),
-                         p("Please add new Market Object in tab 'Market' if you wish to proceed with different Risk Factor Object for the valuation."),
-                         selectInput("ra_irr_scenario", "Interest Rate Risk Scenario", choices = c('Parallel Shift')),
-                         numericInput("ra_irr_shift_amount", "Shift Amount", value = 0.01, step = 0.001, min = 0, max = 1)
-                       ),
-                       selectInput("ra_irr_income_view", "Income View", choices = c("marginal", "cumulative")),
-                       dateInput("ra_irr_from", "From", value = as.Date(paste0(format(Sys.Date(), "%Y"), "-01-01")), format = "yyyy-mm-dd"),
-                       dateInput("ra_irr_to", "To", value = as.Date(paste0(format(Sys.Date() + years(1), "%Y"), "-01-01")), format = "yyyy-mm-dd")
+                       selectInput("ra_sub_scenario", "Interest Rate Risk Scenario", choices = c('Parallel Shift')),
+                       selectInput("ra_mocs", "Market Objects", choices = NULL, multiple = TRUE),
+                       p("Please add new Market Object in tab 'Market' if you wish to proceed with different Risk Factor Object for the valuation."),
+                       fluidRow(
+                         id = "ra_irr_shift_amounts",
+                         column(3, numericInput("ra_irr_shift_amount1", label = "Shift 1", value = 0.01, step = 0.001, min = 0.001, max = 1.0)),
+                         column(3, numericInput("ra_irr_shift_amount2", label = "Shift 2", value = NULL, step = 0.001, min = 0.001, max = 1.0)),
+                         column(3, numericInput("ra_irr_shift_amount3", label = "Shift 3", value = NULL, step = 0.001, min = 0.001, max = 1.0)),
+                         column(3, numericInput("ra_irr_shift_amount4", label = "Shift 4", value = NULL, step = 0.001, min = 0.001, max = 1.0))
+                       )
                      ),
+                     conditionalPanel(
+                       condition = "input.ra_scenario == 'Default Risk'",
+                       selectInput("ra_dr_sub_scenario", "Default Risk Scenario", choices = c('Probability')),
+                       selectInput("ra_dr_mocs", "Market Objects", choices = NULL, multiple = TRUE),
+                       p("Please add new Market Object in tab 'Market' if you wish to proceed with different Risk Factor Object for the simulation."),
+                       fluidRow(
+                         id = "ra_dr_recovery_rates",
+                         column(3, numericInput("ra_dr_recovery_rate1", label = "Recovery 1", value = 0.01, step = 0.001, min = 0.001, max = 1.0)),
+                         column(3, numericInput("ra_dr_recovery_rate2", label = "Recovery 2", value = NULL, step = 0.001, min = 0.001, max = 1.0)),
+                         column(3, numericInput("ra_dr_recovery_rate3", label = "Recovery 3", value = NULL, step = 0.001, min = 0.001, max = 1.0)),
+                         column(3, numericInput("ra_dr_recovery_rate4", label = "Recovery 4", value = NULL, step = 0.001, min = 0.001, max = 1.0))
+                       ),
+                       dateInput("ra_dr_from", "Default From", value = as.Date(paste0(format(Sys.Date() + years(1), "%Y"), "-01-01")), format = "yyyy-mm-dd")
+                     ),
+                     selectInput("ra_value_view", "Value View", choices = c("nominal", "market")),
+                     selectInput("ra_income_view", "Income View", choices = c("marginal", "cumulative")),
+                     dateInput("ra_from", "From", value = as.Date(paste0(format(Sys.Date(), "%Y"), "-01-01")), format = "yyyy-mm-dd"),
+                     dateInput("ra_to", "To", value = as.Date(paste0(format(Sys.Date() + years(1), "%Y"), "-01-01")), format = "yyyy-mm-dd"),
                      br(),
                      actionButton("ra_start", "Start Risk Analysis", width = "100%")
                    ),
@@ -423,6 +444,34 @@ fluidPage(
                        column(
                          width = 1,
                          actionButton("ra_delete", "Delete", icon = icon("minus"), width = "100%")
+                       )
+                     ),
+                     fluidRow(
+                       column(
+                         width = 12,
+                         actionButton("ra_detailsToggle", "Details", width = "100%", style = "margin-bottom: 20px !important;")
+                       )
+                     ),
+                     conditionalPanel(
+                       condition = "input.ra_detailsToggle % 2 == 1",
+                       toggle = TRUE,
+                       div(
+                         fluidRow(
+                           column(6,
+                                  verbatimTextOutput("ra_inst_output"),
+                                  verbatimTextOutput("ra_scenario_output"),
+                                  verbatimTextOutput("ra_from_output"),
+                                  verbatimTextOutput("ra_to_output")
+                           ),
+                           column(6, 
+                                  verbatimTextOutput("ra_value_view_output"),
+                                  verbatimTextOutput("ra_mocs_output"),
+                                  verbatimTextOutput("ra_sub_scenario_output"),
+                                  verbatimTextOutput("ra_irr_shift_amount_output"),
+                                  verbatimTextOutput("ra_income_view_output"),
+                           )
+                         ),
+                         style = "margin-bottom: 20px; padding: 19px; border: 1px solid #e5e5e5; border-radius:4px;"
                        )
                      ),
                      uiOutput("ra_uiOutput")
