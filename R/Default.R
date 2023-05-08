@@ -52,6 +52,7 @@ setMethod(f = "generateDefaultContracts", signature = c("ContractType", "list", 
               
               def <- ctr
               
+              def[1, "contractID"] <- paste(ctr[1,"contractID"],"_Default", i, sep = "")
               def[1,"initialExchangeDate"] <- defaultDates[i]
               def[1,"contractRole"] <- "RPL"
               def[1,"statusDate"] <- defaultDates[i]

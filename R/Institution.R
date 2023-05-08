@@ -681,7 +681,6 @@ setMethod(f = "default", signature = c("Node", "list", "character", "numeric"),
           definition = function(object, defaults, from, recoveryRate){
             
             leafs <- object$Assets$leaves
-            leafs[length(leafs)] <- NULL
             defCtrs <- list()
             
             for(leaf in leafs){
