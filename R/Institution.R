@@ -706,7 +706,7 @@ determineDefault <- function(node, defaults, from, recoveryRate){
   
   ctrList <- list()
   
-  if(!is.null(node$contracts) || lenght(node$contracts) > 0){
+  if(!is.null(node$contracts) || length(node$contracts) > 0){
     
     ctrs <- node$contracts
     defaultLabels <- c()
