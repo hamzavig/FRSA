@@ -687,7 +687,7 @@ setMethod(f = "default", signature = c("Node", "list", "character", "numeric"),
             for(leaf in leafs){
               ctrs <- determineDefault(leaf, defaults, from, recoveryRate)
               
-              if(!is.null(ctrs) || length(ctrs) > 0){
+              if(length(ctrs) > 0){
                 for(j in 1:length(ctrs)){
                   defCtrs <- append(defCtrs, ctrs[[j]])
                 }
