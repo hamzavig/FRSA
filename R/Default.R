@@ -56,8 +56,8 @@ setMethod(f = "generateDefaultContracts", signature = c("ContractType", "list", 
               def[1,"contractRole"] <- "RPL"
               def[1,"statusDate"] <- defaultDates[i]
               def[1,"contractDealDate"] <- defaultDates[i]
-              def[1,"premiumDiscountAtIED"] <- -(ctr[1,"notionalPrincipal"] * premiumDiscount[i])
-              def[1,"notionalPrincipal"] <- ctr[1,"notionalPrincipal"] * defaultRates[i]
+              def[1,"premiumDiscountAtIED"] <- -(as.numeric(ctr[1,"notionalPrincipal"]) * premiumDiscount[i])
+              def[1,"notionalPrincipal"] <- as.numeric(ctr[1,"notionalPrincipal"]) * defaultRates[i]
               
               defCtr <- contracts_df2list(def)
               defCtrs <- append(defCtrs, defCtr[[1]])
