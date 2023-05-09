@@ -461,15 +461,16 @@ fluidPage(
                            column(6,
                                   verbatimTextOutput("ra_inst_output"),
                                   verbatimTextOutput("ra_scenario_output"),
+                                  verbatimTextOutput("ra_sub_scenario_output"),
                                   verbatimTextOutput("ra_from_output"),
                                   verbatimTextOutput("ra_to_output")
                            ),
-                           column(6, 
-                                  verbatimTextOutput("ra_value_view_output"),
+                           column(6,
                                   verbatimTextOutput("ra_mocs_output"),
-                                  verbatimTextOutput("ra_sub_scenario_output"),
-                                  verbatimTextOutput("ra_irr_shift_amount_output"),
+                                  verbatimTextOutput("ra_rates_output"),
+                                  verbatimTextOutput("ra_value_view_output"),
                                   verbatimTextOutput("ra_income_view_output"),
+                                  vebratimTextoutput("ra_scale_output")
                            )
                          ),
                          style = "margin-bottom: 20px; padding: 19px; border: 1px solid #e5e5e5; border-radius:4px;"
