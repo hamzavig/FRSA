@@ -429,6 +429,7 @@ fluidPage(
                      ),
                      selectInput("ra_value_view", "Value View", choices = c("nominal", "market")),
                      selectInput("ra_income_view", "Income View", choices = c("marginal", "cumulative")),
+                     selectInput("ra_scale", "Scale", choices = c("in millions", "in thousands", "no scale")),
                      dateInput("ra_from", "From", value = as.Date(paste0(format(Sys.Date(), "%Y"), "-01-01")), format = "yyyy-mm-dd"),
                      dateInput("ra_to", "To", value = as.Date(paste0(format(Sys.Date() + years(1), "%Y"), "-01-01")), format = "yyyy-mm-dd"),
                      br(),
