@@ -383,7 +383,7 @@ function(input, output, session) {
       path <- input$ct_file$datapath
       
       ct_df <- utils::read.csv(path)
-      ct_type <- ct_df$contractType[1]
+      ct_type <- if(!is.null(ct_df$contractType[1])) ct_df$contractType[1] else 'NULL'
       
       if((ct_type == 'ANN' && input$ct_ptf_type == 'Annuities') || 
          (ct_type == 'PAM' && input$ct_ptf_type == 'PrincipalAtMaturities') ||
