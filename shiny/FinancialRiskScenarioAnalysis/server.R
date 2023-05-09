@@ -1481,7 +1481,10 @@ function(input, output, session) {
                          column(
                            width = 12,
                            selectInput("ra_moc_view", NULL, choices = scenario_values$marketObjects, width = '100%'),
-                           plotOutput("ra_moc_plot")
+                           plotOutput("ra_moc_plot"),
+                           br(),
+                           DTOutput("ra_moc_curves_df"),
+                           br()
                          )
                        )
               ),
@@ -1615,6 +1618,27 @@ function(input, output, session) {
         output$ra_moc_plot <- renderPlot({
           plotMultiShift(ycShift)
         })
+        
+        ycShitfLabels <- sapply(ycShift, function(yc) yc$label)
+        
+        curves_df <- data.frame(MarketObject = ycShiftLabels)
+        
+        for(yc in ycShift){
+          for(i in 1:lenght(yc$Rates)){
+            curves_df[yc$Tenors[i]] <- yc$rates[i]
+          }
+        }
+        
+        output$ra_moc_curves_df <- renderDataTable({
+            curves_df %>% datatable(options = list(
+              scrollX = TRUE,
+              columnDefs = list(list(className = "nowrap", targets = "_all"))
+            ),
+            selection = list(mode = 'single')
+            )
+          })
+        
+        
       }else{
         dc_id <- which(scenario_values$marketObjects == input$ra_moc_view)
         dcObject <- scenario_values$dcObjects[[dc_id]]
