@@ -65,6 +65,7 @@ fluidPage(
                 column(3, numericInput("rf_rate3", label = "Rate 3", value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
                 column(3, numericInput("rf_rate4", label = "Rate 4", value = 0.01, step = 0.01, min = 0.01, max = 1.0))
               ),
+              uiOutput("rf_single_notification"),
               br(),
               actionButton("rf_add", "Add Risk Factor", width = "100%")
             ),
