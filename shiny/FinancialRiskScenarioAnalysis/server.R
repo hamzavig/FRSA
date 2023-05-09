@@ -1495,7 +1495,9 @@ function(input, output, session) {
                        fluidRow(
                          column(
                            width = 12,
-                           selectInput("ra_default_inst_view", NULL, choices = default_inst_vec(), width = "100%")
+                           selectInput("ra_default_inst_view", NULL, choices = default_inst_vec(), width = "100%"),
+                           DTOutput("ra_default_contracts_df"),
+                           br(),
                        )
               ),
               tabPanel("Financial Statements",
@@ -1533,6 +1535,31 @@ function(input, output, session) {
     }
   })
   
+  
+  observeEvent(input$ra_default_inst_view, {
+  
+    if(!is.null(input$ra_default_inst_view) ||
+       input$ra_default_inst_view != ''){
+      
+      scenario_id <- which(scenarios() == input$ra_view)
+      scenario_values <- scenario_values_ls()[[scenario_id]]
+      
+      inst_id <- which(default_inst_vec() == input$ra_default_inst_view) + 1
+      inst <- scenario_values$instList[[inst_id]]
+
+      default_ct_df <- getContractsAsDataFrames(inst, 'Default')
+      
+      output$ra_default_contracts_df <- renderDataTable({
+            default_ct_df %>% datatable(options = list(
+              scrollX = TRUE,
+              columnDefs = list(list(className = "nowrap", targets = "_all"))
+            ),
+            selection = list(mode = 'single')
+            )
+          })
+      
+    }
+  })
   
   observeEvent(input$ra_financial_statement_scenario, {
     
