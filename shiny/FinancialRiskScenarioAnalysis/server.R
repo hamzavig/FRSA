@@ -3,6 +3,8 @@
 # application by clicking 'Run App' above.
 #
 
+# Author: Vigan Hamzai
+
 # Define server logic
 function(input, output, session) {
   
