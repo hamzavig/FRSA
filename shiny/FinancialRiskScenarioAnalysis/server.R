@@ -891,7 +891,7 @@ function(input, output, session) {
         )
       })
       
-      evs <- EventSeries(ctObject, "https://demo.actusfrf.org:8080/", RFConn())
+      evs <- EventSeries(ctObject, "https://demo.actusfrf.org:8080/", RFConn(yieldCurve_ls()))
       
       output$ev_plot <- renderPlot({
         cashflowPlot(evs)
