@@ -3,8 +3,6 @@
 # application by clicking 'Run App' above.
 #
 
-# Author: Vigan Hamzai
-
 # Define server logic
 function(input, output, session) {
   
@@ -466,7 +464,7 @@ function(input, output, session) {
       children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
       new_vector <- c(children_names)
       nodes(new_vector)
-      updateSelectInput(session, inputId = "node", choices = nodes())
+      updateSelectInput(session, inputId = "node", choices = names(inst$leaves))
     }
   })
   
@@ -615,20 +613,6 @@ function(input, output, session) {
   
   # Structure ----------------------------------------
   
-  find_node_by_name <- function(node, name) {
-    if (node$name == name) {
-      return(node)
-    } else if (length(node$children) > 0) {
-      for (child in node$children) {
-        result <- find_node_by_name(child, name)
-        if (!is.null(result)) {
-          return(result)
-        }
-      }
-    }
-    return(NULL)
-  }
-  
   # Render institution node structure based on current selected institution
   output$inst_structure <- renderPrint({
     print(current_inst())
@@ -679,7 +663,7 @@ function(input, output, session) {
       }else{
         inst <- current_inst()
         parent <- input$str_node_parent
-        parent_object <- find_node_by_name(inst, parent)
+        parent_object <- findNodeByName(inst, parent)
         new_node <- input$str_new_node
         parent_object$AddChild(new_node)
         
@@ -1311,7 +1295,7 @@ function(input, output, session) {
       
       rfConnector <- RFConn(yieldCurve_shifted)
     }else{
-      
+      inst$Assets$AddChild('Default')
       scenario_values$defaultFrom <- as.character(input$ra_dr_from)
       
       scenario_values$recoveryRates <- na.omit(sapply(as.character(1:4), function(i){
