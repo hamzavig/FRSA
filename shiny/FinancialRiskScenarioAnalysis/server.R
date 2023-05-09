@@ -284,6 +284,8 @@ function(input, output, session) {
   market_obj_vec <- reactiveVal(c())
   market_obj_dr_vec <- reactiveVal(c())
   
+  default_inst_vec <- reactiveVal(c())
+  
   # Institution Creation / Deletion ------------------
   
   observeEvent(input$inst_add, {
@@ -1384,6 +1386,9 @@ function(input, output, session) {
       }
       fs_scenarios(fs_scenario_vec)
       
+      default_insts <- sapply(scenario_values$instList[-1], function(inst) inst$name)
+      default_inst_vec(default_insts)
+      
       output$ra_inst_output <- renderText({
         paste("Selected Institution: ", scenario_values$instList[[1]]$name)
       })
@@ -1476,6 +1481,7 @@ function(input, output, session) {
           tagList(
             tabsetPanel(
               tabPanel("Market",
+                       br(),
                        fluidRow(
                          column(
                            width = 12,
@@ -1485,7 +1491,12 @@ function(input, output, session) {
                        )
               ),
               tabPanel("Default Contracts",
-                       uiOutput("ra_default_contracts")
+                       br(),
+                       fluidRow(
+                         column(
+                           width = 12,
+                           selectInput("ra_default_inst_view", NULL, choices = default_inst_vec(), width = "100%")
+                       )
               ),
               tabPanel("Financial Statements",
                        br(),
