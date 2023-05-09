@@ -34,35 +34,49 @@ function(input, output, session) {
         tags$div("Please add a file!", style = 'color: red;')
       })
     }else{
+      output$ct_file_notification <- NULL
+      inst_id <- which(institution_vec() == input$inst_view)
+      inst <- institution_ls()[[inst_id]]$tree
+      
       filename <- input$rf_file$datapath
-      file_df <- riskFile2dataframe(filename)
-      yc_df <- file_df[file_df$rfType == 'YieldCurve',]
-      dc_df <- file_df[file_df$rfType == 'DefaultCurve',]
       
-      temp_yc_df <- bind_rows(yieldCurve_df(), yc_df)
-      temp_dc_df <- bind_rows(defaultCurve_df(), dc_df)
+      rf_df <- utils::read.csv(filename)
+      rf_type <- if(!is.null(rf_df$rfType[1])) rf_df$rfType[1] else 'NULL'
       
-      temp_yc_df <- temp_yc_df[!duplicated(temp_yc_df),]
-      temp_dc_df <- temp_dc_df[!duplicated(temp_dc_df),]
+      if(rf_type %in% c('YieldCurve', 'DefaultCurve')){
+        file_df <- riskFile2dataframe(filename)
+        yc_df <- file_df[file_df$rfType == 'YieldCurve',]
+        dc_df <- file_df[file_df$rfType == 'DefaultCurve',]
       
-      yc_empty_cols <- apply(temp_yc_df, 2, function(x) all(is.na(x) | x == ""))
-      dc_empty_cols <- apply(temp_dc_df, 2, function(x) all(is.na(x) | x == ""))
+        temp_yc_df <- bind_rows(yieldCurve_df(), yc_df)
+        temp_dc_df <- bind_rows(defaultCurve_df(), dc_df)
       
-      # Subset the data frame to remove empty columns
-      temp_yc_df <- subset(temp_yc_df, select = !yc_empty_cols)
-      temp_dc_df <- subset(temp_dc_df, select = !dc_empty_cols)
+        temp_yc_df <- temp_yc_df[!duplicated(temp_yc_df),]
+        temp_dc_df <- temp_dc_df[!duplicated(temp_dc_df),]
       
-      yieldCurve_df(temp_yc_df)
-      defaultCurve_df(temp_dc_df)
+        yc_empty_cols <- apply(temp_yc_df, 2, function(x) all(is.na(x) | x == ""))
+        dc_empty_cols <- apply(temp_dc_df, 2, function(x) all(is.na(x) | x == ""))
       
-      if (nrow(yieldCurve_df()) > 0){
-        new_yc_list <- riskFactors_df2list(temp_yc_df)
-        yieldCurve_ls(new_yc_list)
-      }
+        # Subset the data frame to remove empty columns
+        temp_yc_df <- subset(temp_yc_df, select = !yc_empty_cols)
+        temp_dc_df <- subset(temp_dc_df, select = !dc_empty_cols)
       
-      if (nrow(defaultCurve_df()) > 0){
-        new_dc_list <- riskFactors_df2list(temp_dc_df)
-        defaultCurve_ls(new_dc_list)
+        yieldCurve_df(temp_yc_df)
+        defaultCurve_df(temp_dc_df)
+        
+        if (nrow(yieldCurve_df()) > 0){
+          new_yc_list <- riskFactors_df2list(temp_yc_df)
+          yieldCurve_ls(new_yc_list)
+        }
+        
+        if (nrow(defaultCurve_df()) > 0){
+          new_dc_list <- riskFactors_df2list(temp_dc_df)
+          defaultCurve_ls(new_dc_list)
+        }
+      }else{
+        output$rf_file_notification <- renderUI({
+          tags$div("Not supported risk factor type or wrong file type!", style = 'color: red;')
+        })
       }
     }
   })
@@ -71,52 +85,89 @@ function(input, output, session) {
   # Update data frames with single risk factor insertion
   observeEvent(input$rf_add, {
     
-    # Create a list of inputs
-    inputs <- list(
-      type = input$rf_type,
-      label = input$rf_label,
-      ref_date = as.character(input$rf_ref_date),
-      tenors = list(input$rf_tenor1, input$rf_tenor2, input$rf_tenor3, input$rf_tenor4),
-      rates = list(input$rf_rate1, input$rf_rate2, input$rf_rate3, input$rf_rate4)
-    )
+    tenors_length <- na.omit(sapply(as.character(1:4), function(i){
+        variable <- paste0("input$rf_tenor", i)
+        value <- eval(parse(text = variable))
+        return(value)
+    }))
     
-    # Unlist the tenors and rates
-    tenors_unlisted <- unlist(inputs$tenors)
-    rates_unlisted <- unlist(inputs$rates)
+    rates_length <- na.omit(sapply(as.character(1:4), function(i){
+        variable <- paste0("input$rf_rate", i)
+        value <- eval(parse(text = variable))
+        return(value)
+    }))
     
-    # Create a new data frame with columns for the inputs
-    new_row <- data.frame(
-      rfType = inputs$type,
-      label = inputs$label,
-      referenceDate = inputs$ref_date,
-      stringsAsFactors = FALSE
-    )
-    
-    # Add columns for the unlisted tenors and rates
-    for (i in 1:length(tenors_unlisted)) {
-      new_row[[paste0('tenor.', i)]] <- tenors_unlisted[i]
-      new_row[[paste0('rate.', i)]] <- rates_unlisted[i]
-    }
-    
-    if(input$rf_type == 'YieldCurve'){
-      
-      temp_yc_df <- bind_rows(yieldCurve_df(), new_row)
-      temp_yc_df <- temp_yc_df[!duplicated(temp_yc_df),]
-      yieldCurve_df(temp_yc_df)
-      
-      new_yc_list <- riskFactors_df2list(temp_yc_df)
-      yieldCurve_ls(new_yc_list)
-      
+    if(tenors_length > rates_length){
+      output$rf_file_notification <- renderUI({
+          tags$div("Not enough rates for amount of tenors entered!", style = 'color: red;')
+       })
+    }else if(rates_length > tenors_length){
+      output$rf_file_notification <- renderUI({
+          tags$div("Not enough tenors for amount of rates entered!", style = 'color: red;')
+       })
+    }else if(tenors_length == 0){
+      output$rf_file_notification <- renderUI({
+          tags$div("At least one tenor is required!", style = 'color: red;')
+       })
+    }else if(rates_length == 0){
+      output$rf_file_notification <- renderUI({
+          tags$div("At least one rate is required!", style = 'color: red;')
+       })
+    }else if(input$rf_label == ''){
+      output$rf_file_notification <- renderUI({
+          tags$div("'Risk Factor Label' can not be empty!", style = 'color: red;')
+       })
+    }else if(is.null(input$rf_ref_date) || is.na(input$rf_ref_date) || input$rf_ref_date == ''){
+      output$rf_file_notification <- renderUI({
+          tags$div("'Reference Date' can not be empty!", style = 'color: red;')
+       })
     }else{
-      
-      temp_dc_df <- bind_rows(defaultCurve_df(), new_row)
-      temp_dc_df <- temp_dc_df[!duplicated(temp_dc_df),]
-      defaultCurve_df(temp_dc_df)
-      
-      new_dc_list <- riskFactors_df2list(temp_dc_df)
-      defaultCurve_ls(new_dc_list)
-    }
+      output$rf_single_notification <- NULL
+        
+      # Create a list of inputs
+      inputs <- list(
+        type = input$rf_type,
+        label = input$rf_label,
+        ref_date = as.character(input$rf_ref_date),
+        tenors = list(input$rf_tenor1, input$rf_tenor2, input$rf_tenor3, input$rf_tenor4),
+        rates = list(input$rf_rate1, input$rf_rate2, input$rf_rate3, input$rf_rate4)
+      )
     
+      # Unlist the tenors and rates
+      tenors_unlisted <- unlist(inputs$tenors)
+      rates_unlisted <- unlist(inputs$rates)
+    
+      # Create a new data frame with columns for the inputs
+      new_row <- data.frame(
+        rfType = inputs$type,
+        label = inputs$label,
+        referenceDate = inputs$ref_date,
+        stringsAsFactors = FALSE
+      )
+    
+      # Add columns for the unlisted tenors and rates
+      for (i in 1:length(tenors_unlisted)) {
+        new_row[[paste0('tenor.', i)]] <- tenors_unlisted[i]
+        new_row[[paste0('rate.', i)]] <- rates_unlisted[i]
+      }
+    
+      if(input$rf_type == 'YieldCurve'){
+        temp_yc_df <- bind_rows(yieldCurve_df(), new_row)
+        temp_yc_df <- temp_yc_df[!duplicated(temp_yc_df),]
+        yieldCurve_df(temp_yc_df)
+        
+        new_yc_list <- riskFactors_df2list(temp_yc_df)
+        yieldCurve_ls(new_yc_list)
+      
+      }else{
+        temp_dc_df <- bind_rows(defaultCurve_df(), new_row)
+        temp_dc_df <- temp_dc_df[!duplicated(temp_dc_df),]
+        defaultCurve_df(temp_dc_df)
+        
+        new_dc_list <- riskFactors_df2list(temp_dc_df)
+        defaultCurve_ls(new_dc_list)
+      }
+    }
   })
   
   
