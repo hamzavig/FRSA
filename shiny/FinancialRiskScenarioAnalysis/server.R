@@ -1265,7 +1265,8 @@ function(input, output, session) {
                             from = input$ra_from,
                             to = input$ra_to,
                             marketObjects = if(input$ra_scenario == 'Interest Rate Risk') input$ra_mocs else input$ra_dr_mocs,
-                            subScenario = if(input$ra_scenario == 'Interest Rate Risk') input$ra_sub_scenario else input$ra_dr_sub_scenario
+                            subScenario = if(input$ra_scenario == 'Interest Rate Risk') input$ra_sub_scenario else input$ra_dr_sub_scenario,
+                            scaleWritten = input$ra_scale
                             )
     
     scenarios(c(scenarios(), scenario_name))
@@ -1282,6 +1283,10 @@ function(input, output, session) {
     tb <- timeBuckets(by, bucketLabs=t0Year:tnYear, 
                       breakLabs=substr(as.character(by),3,10))
     
+    scenario_values$scale <- switch(scenario_values$scaleWritten,
+                                    "in millions" = 1000000,
+                                    "in thousands" = 1000,
+                                    "no scale" = 1)
     
     if(scenario_values$scenario == 'Interest Rate Risk'){
       scenario_values$shiftAmounts <- na.omit(sapply(as.character(1:4), function(i){
@@ -1355,8 +1360,8 @@ function(input, output, session) {
     
     for(i in 1:length(scenario_values$instList)){
       scenario_values$instList[[i]] <- events(object = scenario_values$instList[[i]], riskFactors = rfConnector)
-      scenario_values$value[[i]] <- value(scenario_values$instList[[i]], tb, type = scenario_values$valueType)
-      scenario_values$income[[i]] <- income(scenario_values$instList[[i]], tb, type = scenario_values$incomeType)
+      scenario_values$value[[i]] <- value(scenario_values$instList[[i]], tb, type = scenario_values$valueType, scale = scenario_values$scale)
+      scenario_values$income[[i]] <- income(scenario_values$instList[[i]], tb, type = scenario_values$incomeType, scale = scenario_values$scale)
     }
     
     fs_scenario_vec <- c()
@@ -1422,6 +1427,10 @@ function(input, output, session) {
         paste("Income View: ", scenario_values$incomeType)
       })
       
+      output$ra_scale_output <- renderText({
+        paste("Scale: ", scenario_values$scaleWritten)
+      })
+      
       output$ra_from_output <- renderText({
         paste("From: ", format(scenario_values$from, "%Y-%m-%d"))
       })
@@ -1458,14 +1467,17 @@ function(input, output, session) {
                        fluidRow(
                          column(
                            width = 4,
+                           h5('Source Statement'),
                            verbatimTextOutput("ra_financial_statement_1")
                          ),
                          column(
                            width = 4,
+                           h5('Target Statement'),
                            verbatimTextOutput("ra_financial_statement_2")
                          ),
                          column(
                            width = 4,
+                           h5('Difference'),
                            verbatimTextOutput("ra_financial_statement_3")
                          )
                        )
