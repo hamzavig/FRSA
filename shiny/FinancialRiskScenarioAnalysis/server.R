@@ -1414,7 +1414,7 @@ function(input, output, session) {
         paste("Sub Scenario: ", scenario_values$subScenario)
       })
       
-      output$ra_irr_shift_amount_output <- renderText({
+      output$ra_rates_output <- renderText({
         if(scenario_values$scenario == 'Interest Rate Risk'){
           paste("Shift Amount(s):", paste(scenario_values$shiftAmounts, collapse = ", "))
         }else{
