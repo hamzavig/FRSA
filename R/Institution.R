@@ -385,14 +385,65 @@ cloneInstitution <- function(inst){
     dfs <- list()
     
     for(type in ctrsSplit){
-      ctrs <- lapply(type, function(ct) ct$contractTerms)
+      ctrs <- type
       crid <- 1:length(ctrs)
       df <- data.frame(crid)
-      contractType <- ctrs[[1]]$contractType
+      contractType <- ctrs[[1]]$contractTerms$contractType
       contractTerms <- getContractTerms(contractType)
       for(term in contractTerms){
-        df[term] <- unlist(sapply(ctrs, function(ct) if(is.null(ct[[term]])) 'NULL' else ct[[term]]))
+        df[term] <- unlist(sapply(ctrs, function(ct){
+          
+          if(ct$contractTerms$contractType %in% c('ANN', 'PAM')){
+            if(is.null(ct$contractTerms[[term]])){
+              return('NULL')
+            }else{
+              return(ct$contractTerms[[term]])
+            } 
+          }else if(ct$contractTerms$contractType %in% c('Investments')){
+            if(term %in% c('repetition')){
+              return('')
+            }else if(term %in% c('frequency')){
+              return('1 years')
+            }else if(term %in% c('times')){
+              return(ct$args$n)
+            }else if(term %in% c('inverted')){
+              if(substr(ct$args$times@Data[1], 1, 10) == ct$contractTerms$initialExchangeDate){
+                return(FALSE)
+              }else{
+                return(TRUE)
+              }
+            }else{
+              if(is.null(ct$contractTerms[[term]])){
+                return('NULL')
+              }else{
+                return(ct$contractTerms[[term]])
+              } 
+            }
+          }else if(ct$contractTerms$contractType %in% c('OperationalCF')){
+            if(term %in% c('repetition')){
+              return(length(ct$args$dat))
+            }else if(term %in% c('frequency')){
+              return('1 years')
+            }else if(term %in% c('times')){
+              return(length(ct$args$dat)+1)
+            }else if(term %in% c('inverted')){
+              if(substr(ct$args$times@Data[1], 1, 10) == ct$contractTerms$initialExchangeDate){
+                return(TRUE)
+              }else{
+                return(FALSE)
+              }
+            }else{
+              if(is.null(ct$contractTerms[[term]])){
+                return('NULL')
+              }else{
+                return(ct$contractTerms[[term]])
+              } 
+            }
+          }
+          
+        }))
       }
+      
       df <- subset(df, select = -crid)
       dfs <- append(dfs, list(df))
     }
