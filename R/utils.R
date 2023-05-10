@@ -349,7 +349,7 @@ getContractTerms <- function(type) {
                'cycleOfScalingIndex','scalingEffect','cycleAnchorDateOfRateReset','cycleOfRateReset','rateSpread','arrayCycleAnchorDateOfRateReset','arrayCycleOfRateReset',
                'arrayRate','arrayFixedVariable','marketObjectCodeOfRateReset','cyclePointOfRateReset','fixingDays','rateMultiplier','description','contrStrucObj.marketObjectCode',
                'contrStruc.referenceType','contrStruc.referenceRole')
-  }else if(type == 'Operations'){
+  }else if(type %in% c('Investments', 'OperationalCF')){
     terms <- c('node','contractType','contractID','contractRole','currency','notionalPrincipal','initialExchangeDate','maturityDate','repetition','frequency','times','inverted','description')
   }else{
     stop(paste("ContractType", type, "does not exist!", sep=" "))
