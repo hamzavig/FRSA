@@ -53,7 +53,7 @@ setMethod("cashflowPlot", signature("EventSeries"),
   # if there is at least one riskFactor, put its rfID into id which is 
   # used to set the graph title 
             if (length(evs$riskFactors) >= 1 ) {
-               id <- paste0(id, " ",evs$riskFactors[[1]]$riskFactorID)
+               id <- paste0(id, " ",evs$riskFactors[[1]]$label)
             }
   # eventually id should be called graphId, and set scenarioID  
             
