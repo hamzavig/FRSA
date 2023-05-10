@@ -131,6 +131,9 @@ setMethod(f = "EventSeries", signature = c("ContractType", "character", "RiskFac
 
             events_df$time <- sapply(events_df$time,
                                      function(t){substr(t,1,10)}) # format dates
+            events_df$payoff <- round(events_df$payoff,2)
+            events_df$nominalValue <- round(events_df$nominalValue,2)
+            events_df$nominalAccrued <- round(events_df$nominalAccrued,2)
             evs$events_df <- events_df
             return(evs)
           })
