@@ -100,7 +100,7 @@ operations_df2list <- function(operations_df) {
       if (operations_df$contractRole[irow] == "long"){
         notionalPrincipal <- operations_df$notionalPrincipal[irow]
       }else{
-        notionalPrincipal <- -operations_df$notionalPrincipal[irow]
+        notionalPrincipal <- -as.numeric(operations_df$notionalPrincipal[irow])
       }
       
       args <- list(value = notionalPrincipal,
@@ -115,7 +115,7 @@ operations_df2list <- function(operations_df) {
       if (operations_df$contractRole[irow] == "long"){
         notionalPrincipal <- operations_df$notionalPrincipal[irow]
       }else{
-        notionalPrincipal <- -operations_df$notionalPrincipal[irow]
+        notionalPrincipal <- -as.numeric(operations_df$notionalPrincipal[irow])
       }
       
       cfs <- rep(notionalPrincipal, operations_df$repetition[irow])
