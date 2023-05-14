@@ -34,9 +34,6 @@ function(input, output, session) {
         tags$div("Please add a file!", style = 'color: red;')
       })
     }else{
-      output$ct_file_notification <- NULL
-      inst_id <- which(institution_vec() == input$inst_view)
-      inst <- institution_ls()[[inst_id]]$tree
       
       filename <- input$rf_file$datapath
       
@@ -85,41 +82,45 @@ function(input, output, session) {
   # Update data frames with single risk factor insertion
   observeEvent(input$rf_add, {
     
-    tenors_length <- na.omit(sapply(as.character(1:4), function(i){
+    tenors_length <- length(na.omit(sapply(as.character(1:4), function(i){
         variable <- paste0("input$rf_tenor", i)
         value <- eval(parse(text = variable))
-        return(value)
-    }))
+        if(value != ''){
+          return(value)
+        }else{
+          return(NA)
+        }
+    })))
     
-    rates_length <- na.omit(sapply(as.character(1:4), function(i){
+    rates_length <- length(na.omit(sapply(as.character(1:4), function(i){
         variable <- paste0("input$rf_rate", i)
         value <- eval(parse(text = variable))
         return(value)
-    }))
+    })))
     
-    if(tenors_length > rates_length){
-      output$rf_file_notification <- renderUI({
+    if(input$rf_label == ''){
+      output$rf_single_notification <- renderUI({
+        tags$div("'Risk Factor Label' can not be empty!", style = 'color: red;')
+      })
+    }else if(length(input$rf_ref_date) == 0){
+      output$rf_single_notification <- renderUI({
+        tags$div("'Reference Date' can not be empty!", style = 'color: red;')
+      })
+    }else if(is.null(tenors_length)){
+      output$rf_single_notification <- renderUI({
+        tags$div("At least one tenor is required!", style = 'color: red;')
+      })
+    }else if(is.null(tenors_length)){
+      output$rf_single_notification <- renderUI({
+        tags$div("At least one rate is required!", style = 'color: red;')
+      })
+    }else if(tenors_length > rates_length){
+      output$rf_single_notification <- renderUI({
           tags$div("Not enough rates for amount of tenors entered!", style = 'color: red;')
        })
     }else if(rates_length > tenors_length){
-      output$rf_file_notification <- renderUI({
+      output$rf_single_notification <- renderUI({
           tags$div("Not enough tenors for amount of rates entered!", style = 'color: red;')
-       })
-    }else if(tenors_length == 0){
-      output$rf_file_notification <- renderUI({
-          tags$div("At least one tenor is required!", style = 'color: red;')
-       })
-    }else if(rates_length == 0){
-      output$rf_file_notification <- renderUI({
-          tags$div("At least one rate is required!", style = 'color: red;')
-       })
-    }else if(input$rf_label == ''){
-      output$rf_file_notification <- renderUI({
-          tags$div("'Risk Factor Label' can not be empty!", style = 'color: red;')
-       })
-    }else if(is.null(input$rf_ref_date) || is.na(input$rf_ref_date) || input$rf_ref_date == ''){
-      output$rf_file_notification <- renderUI({
-          tags$div("'Reference Date' can not be empty!", style = 'color: red;')
        })
     }else{
       output$rf_single_notification <- NULL
@@ -438,65 +439,60 @@ function(input, output, session) {
          (ct_type == 'PAM' && input$ct_ptf_type == 'PrincipalAtMaturities') ||
          (ct_type == 'Investments' && input$ct_ptf_type == 'Operations') ||
          (ct_type == 'OperationalCF' && input$ct_ptf_type == 'Operations')){
-        
+
         if(input$ct_ptf_type != 'Operations'){
-          output$ct_file_notification <- renderUI({
-            tags$div('File imported!', style = 'color: green;')
-          })
-          
           ct_ptf <- samplePortfolio(path, 'contracts')
-          inst <- assignContracts2Tree(inst, ct_ptf)
-          
-          current_inst(inst)
-          node <- input$fc_view
-          ct_df <- getContractsAsDataFrames(inst, node)
-          ctrs(ct_df)
-          
-          output$fc_ui <- renderUI({
-            tagList(
-              DTOutput("fc_df"),
-              br(),
-              uiOutput("ct_buttons")
-            )
-          })
-          
-          output$error_log_df <- renderDataTable({
-            current_inst()$errorLog %>% datatable(options = list(
-              scrollX = TRUE,
-              columnDefs = list(list(className = "nowrap", targets = "_all"))
-            ),
-            selection = list(mode = 'single'),
-            editable = TRUE
-            )
-          })
-          
-          output$inst_market_df <- renderDataTable({
-            current_inst()$rfs %>% datatable(options = list(
-              scrollX = TRUE,
-              columnDefs = list(list(className = "nowrap", targets = "_all"))
-            ),
-            selection = list(mode = 'single'),
-            editable = TRUE
-            )
-          })
-          
-          output$fc_df <- renderDataTable({
-            ctrs() %>% datatable(options = list(
-              scrollX = TRUE,
-              columnDefs = list(list(className = "nowrap", targets = "_all"))
-            ),
-            selection = list(mode = 'single')
-            )
-          })
-          
         }else{
-          ops_df <- samplePortfolio(path, 'operations')
-          
-          output$ct_file_notification <- renderUI({
-            tags$div('Operations file not supported yet.', style = 'color: red;')
-          })
+          ct_ptf <- samplePortfolio(path, 'operations')
         }
         
+        inst <- assignContracts2Tree(inst, ct_ptf)
+        
+        current_inst(inst)
+        node <- input$fc_view
+        ct_df <- getContractsAsDataFrames(inst, node)
+        ctrs(ct_df)
+        
+        output$fc_ui <- renderUI({
+          tagList(
+            DTOutput("fc_df"),
+            br(),
+            uiOutput("ct_buttons")
+          )
+        })
+        
+        output$error_log_df <- renderDataTable({
+          current_inst()$errorLog %>% datatable(options = list(
+            scrollX = TRUE,
+            columnDefs = list(list(className = "nowrap", targets = "_all"))
+          ),
+          selection = list(mode = 'single'),
+          editable = TRUE
+          )
+        })
+        
+        output$inst_market_df <- renderDataTable({
+          current_inst()$rfs %>% datatable(options = list(
+            scrollX = TRUE,
+            columnDefs = list(list(className = "nowrap", targets = "_all"))
+          ),
+          selection = list(mode = 'single'),
+          editable = TRUE
+          )
+        })
+        
+        output$fc_df <- renderDataTable({
+          ctrs() %>% datatable(options = list(
+            scrollX = TRUE,
+            columnDefs = list(list(className = "nowrap", targets = "_all"))
+          ),
+          selection = list(mode = 'single')
+          )
+        })
+        
+        output$ct_file_notification <- renderUI({
+          tags$div('File imported!', style = 'color: green;')
+        })
       }else{
         output$ct_file_notification <- renderUI({
           tags$div("Uploaded file doesn't match 'Portfolio Type'!", style = 'color: red;')
@@ -515,10 +511,11 @@ function(input, output, session) {
       children_names <- sapply(seq_along(children), function(i) children[[i]]$name)
       new_vector <- c(children_names)
       nodes(new_vector)
-      updateSelectInput(session, inputId = "node", choices = names(inst$leaves))
+      leaves <- sapply(inst$leaves, function(leaf) leaf$name)
+      names(leaves) <- NULL
+      updateSelectInput(session, inputId = "node", choices = leaves)
     }
   })
-  
   
   # Update dropdown choices when reactive values object changes for applicable market objects
   observe({
@@ -673,33 +670,43 @@ function(input, output, session) {
   observe({
     if (!is.null(current_inst())){
       nodes <- nodes()
-      new_vector <- c('New', nodes[-1])
+      new_vector <- c('New', nodes)
       str_nodes(new_vector)
       updateSelectInput(session, inputId = "str_node", choices = str_nodes())
     }
   })
   
   observeEvent(input$str_node, {
-    if (input$str_node == 'New'){
-      output$str_node_options_1_1 <- renderUI({
-        selectInput('str_node_parent', 'Parent', choices = nodes())
-      })
-      output$str_node_options_2_1 <- renderUI({
-        textInput('str_new_node', 'New Node', placeholder = 'Add new node...')
-      })
-      output$str_node_options_2_2 <- renderUI({
-        actionButton('str_add_new_node', 'Add', width = '100%')
-      })
-    }else{
-      output$str_node_options_1_2 <- NULL
-      output$str_node_options_2_2 <- NULL
-      output$str_node_options_1_1 <- renderUI({
-        actionButton('str_remove_node', 'Remove', width = '100%')
-      })
-      output$str_node_options_2_1 <- renderUI({
-        actionButton('str_rename_node', 'Rename', width = '100%')
-      })
-      output$str_notification <- NULL
+    if (!is.null(current_inst())){
+      if (input$str_node == 'New'){
+        output$str_node_options_1_1 <- renderUI({
+          selectInput('str_node_parent', 'Parent', choices = nodes())
+        })
+        output$str_node_options_2_1 <- renderUI({
+          textInput('str_new_node', 'New Node', placeholder = 'Add new node...')
+        })
+        output$str_node_options_2_2 <- renderUI({
+          actionButton('str_add_new_node', 'Add', width = '100%')
+        })
+      }else if(input$str_node == current_inst()$root$name){
+        output$str_node_options_1_2 <- NULL
+        output$str_node_options_2_2 <- NULL
+        output$str_node_options_1_1 <- NULL
+        output$str_node_options_2_1 <- renderUI({
+          actionButton('str_rename_node', 'Rename', width = '100%')
+        })
+        output$str_notification <- NULL
+      }else{
+        output$str_node_options_1_2 <- NULL
+        output$str_node_options_2_2 <- NULL
+        output$str_node_options_1_1 <- renderUI({
+          actionButton('str_remove_node', 'Remove', width = '100%')
+        })
+        output$str_node_options_2_1 <- renderUI({
+          actionButton('str_rename_node', 'Rename', width = '100%')
+        })
+        output$str_notification <- NULL
+      }
     }
   })
   
@@ -736,11 +743,14 @@ function(input, output, session) {
         nodes(new_vector)
         nodes <- nodes()
         
-        new_vector <- c('New', nodes[-1])
+        new_vector <- c('New', nodes)
         str_nodes(new_vector)
         
         updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-        updateSelectInput(session, inputId = "node", choices = nodes())
+        
+        leaves <- sapply(inst$leaves, function(leaf) leaf$name)
+        names(leaves) <- NULL
+        updateSelectInput(session, inputId = "node", choices = leaves)
         
         output$str_notification <- NULL
         
@@ -773,7 +783,7 @@ function(input, output, session) {
   observeEvent(input$str_confirm_remove_node, {
     inst <- current_inst()
     node <- input$str_node
-    node_object <- find_node_by_name(inst, node)
+    node_object <- findNodeByName(inst, node)
     parent <- node_object$parent
     parent$RemoveChild(node)
     
@@ -788,11 +798,14 @@ function(input, output, session) {
     nodes(new_vector)
     nodes <- nodes()
     
-    new_vector <- c('New', nodes[-1])
+    new_vector <- c('New', nodes)
     str_nodes(new_vector)
     
     updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-    updateSelectInput(session, inputId = "node", choices = nodes())
+    
+    leaves <- sapply(inst$leaves, function(leaf) leaf$name)
+    names(leaves) <- NULL
+    updateSelectInput(session, inputId = "node", choices = leaves)
   })
   
   observeEvent(input$str_rename_node, {
@@ -808,21 +821,33 @@ function(input, output, session) {
   })
   
   observeEvent(input$str_cancel_rename_node, {
-    output$str_node_options_1_1 <- renderUI({
-      actionButton('str_remove_node', 'Remove', width = '100%')
-    })
-    output$str_node_options_2_1 <- renderUI({
-      actionButton('str_rename_node', 'Rename', width = '100%')
-    })
-    output$str_node_options_2_2 <- NULL
-    output$str_notification <- NULL
+    if(!is.null(current_inst())){
+      if(input$str_node == current_inst()$root$name){
+        output$str_node_options_1_2 <- NULL
+        output$str_node_options_2_2 <- NULL
+        output$str_node_options_1_1 <- NULL
+        output$str_node_options_2_1 <- renderUI({
+          actionButton('str_rename_node', 'Rename', width = '100%')
+        })
+        output$str_notification <- NULL
+      }else{
+        output$str_node_options_1_1 <- renderUI({
+          actionButton('str_remove_node', 'Remove', width = '100%')
+        })
+        output$str_node_options_2_1 <- renderUI({
+          actionButton('str_rename_node', 'Rename', width = '100%')
+        })
+        output$str_node_options_2_2 <- NULL
+        output$str_notification <- NULL
+      }
+    }
   })
   
   observeEvent(input$str_rename_node_2, {
     if(input$str_new_node_name > ''){
       inst <- current_inst()
       node <- input$str_node
-      node_object <- find_node_by_name(inst, node)
+      node_object <- findNodeByName(inst, node)
       node_object$name <- input$str_new_node_name
       
       output$inst_structure <- renderPrint({
@@ -836,11 +861,14 @@ function(input, output, session) {
       nodes(new_vector)
       nodes <- nodes()
       
-      new_vector <- c('New', nodes[-1])
+      new_vector <- c('New', nodes)
       str_nodes(new_vector)
       
       updateSelectInput(session, inputId = "str_node", choices = str_nodes())
-      updateSelectInput(session, inputId = "node", choices = nodes())
+      
+      leaves <- sapply(inst$leaves, function(leaf) leaf$name)
+      names(leaves) <- NULL
+      updateSelectInput(session, inputId = "node", choices = leaves)
       
       output$str_notification <- NULL
       
@@ -926,7 +954,12 @@ function(input, output, session) {
         )
       })
       
-      evs <- EventSeries(ctObject, "https://demo.actusfrf.org:8080/", RFConn(yieldCurve_ls()))
+      if(ctObject$contractTerms$contractType %in% c('ANN', 'PAM')){
+        evs <- EventSeries(ctObject, "https://demo.actusfrf.org:8080/", RFConn(yieldCurve_ls()))
+      }else{
+        evs <- EventSeries(ctObject, ctObject$contractTerms$initialExchangeDate)
+      }
+      
       
       output$ev_plot <- renderPlot({
         cashflowPlot(evs)
@@ -1482,7 +1515,10 @@ function(input, output, session) {
                          column(
                            width = 12,
                            selectInput("ra_moc_view", NULL, choices = scenario_values$marketObjects, width = '100%'),
-                           plotOutput("ra_moc_plot")
+                           plotOutput("ra_moc_plot"),
+                           br(),
+                           DTOutput("ra_moc_curves_df"),
+                           br()
                          )
                        )
               ),
@@ -1501,17 +1537,17 @@ function(input, output, session) {
                        fluidRow(
                          column(
                            width = 4,
-                           h5('Source Statement'),
+                           h4('Source Statement'),
                            verbatimTextOutput("ra_financial_statement_1")
                          ),
                          column(
                            width = 4,
-                           h5('Target Statement'),
+                           h4('Target Statement'),
                            verbatimTextOutput("ra_financial_statement_2")
                          ),
                          column(
                            width = 4,
-                           h5('Difference'),
+                           h4('Difference'),
                            verbatimTextOutput("ra_financial_statement_3")
                          )
                        )
@@ -1534,7 +1570,7 @@ function(input, output, session) {
                            selectInput("ra_moc_view", NULL, choices = scenario_values$marketObjects, width = '100%'),
                            plotOutput("ra_moc_plot"),
                            br(),
-                           DTOutput("ra_moc_curves_df"),
+                           DTOutput("ra_dr_moc_curves_df"),
                            br()
                          )
                        )
@@ -1546,7 +1582,8 @@ function(input, output, session) {
                            width = 12,
                            selectInput("ra_default_inst_view", NULL, choices = default_inst_vec(), width = "100%"),
                            DTOutput("ra_default_contracts_df"),
-                           br(),
+                           br()
+                         )
                        )
               ),
               tabPanel("Financial Statements",
@@ -1670,13 +1707,13 @@ function(input, output, session) {
           plotMultiShift(ycShift)
         })
         
-        ycShitfLabels <- sapply(ycShift, function(yc) yc$label)
+        ycShiftLabels <- sapply(ycShift, function(yc) yc$label)
         
         curves_df <- data.frame(MarketObject = ycShiftLabels)
-        
-        for(yc in ycShift){
-          for(i in 1:lenght(yc$Rates)){
-            curves_df[yc$Tenors[i]] <- yc$rates[i]
+
+        for(i in 1:length(ycShift)){
+          for(j in 1:length(ycShift[[i]]$Rates)){
+            curves_df[i, ycShift[[i]]$Tenors[j]] <- ycShift[[i]]$Rates[j]
           }
         }
         
@@ -1697,6 +1734,22 @@ function(input, output, session) {
         output$ra_moc_plot <- renderPlot({
           plot(dcObject)
         })
+        
+        curves_df <- data.frame(MarketObject = dcObject$label)
+
+        for(i in 1:length(dcObject$Rates)){
+          curves_df[dcObject$Tenors[i]] <- dcObject$Rates[i]
+        }
+        
+        output$ra_dr_moc_curves_df <- renderDataTable({
+          curves_df %>% datatable(options = list(
+            scrollX = TRUE,
+            columnDefs = list(list(className = "nowrap", targets = "_all"))
+          ),
+          selection = list(mode = 'single')
+          )
+        })
+        
       }
     }
 

@@ -53,17 +53,17 @@ fluidPage(
               dateInput("rf_ref_date", "Reference Date", value = Sys.Date(), format = "yyyy-mm-dd"),
               fluidRow(
                 id = "rf_tenors",
-                column(3, textInput("rf_tenor1", label = "Tenor 1", placeholder = "1Y")),
-                column(3, textInput("rf_tenor2", label = "Tenor 2", placeholder = "2Y")),
-                column(3, textInput("rf_tenor3", label = "Tenor 3", placeholder = "5Y")),
-                column(3, textInput("rf_tenor4", label = "Tenor 4", placeholder = "10Y"))
+                column(3, textInput("rf_tenor1", label = "Tenor 1", value = '1Y')),
+                column(3, textInput("rf_tenor2", label = "Tenor 2", value = NULL)),
+                column(3, textInput("rf_tenor3", label = "Tenor 3", value = NULL)),
+                column(3, textInput("rf_tenor4", label = "Tenor 4", value = NULL))
               ),
               fluidRow(
                 id = "rf_rates",
                 column(3, numericInput("rf_rate1", label = "Rate 1", value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
-                column(3, numericInput("rf_rate2", label = "Rate 2", value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
-                column(3, numericInput("rf_rate3", label = "Rate 3", value = 0.01, step = 0.01, min = 0.01, max = 1.0)),
-                column(3, numericInput("rf_rate4", label = "Rate 4", value = 0.01, step = 0.01, min = 0.01, max = 1.0))
+                column(3, numericInput("rf_rate2", label = "Rate 2", value = NULL, step = 0.01, min = 0.01, max = 1.0)),
+                column(3, numericInput("rf_rate3", label = "Rate 3", value = NULL, step = 0.01, min = 0.01, max = 1.0)),
+                column(3, numericInput("rf_rate4", label = "Rate 4", value = NULL, step = 0.01, min = 0.01, max = 1.0))
               ),
               uiOutput("rf_single_notification"),
               br(),
@@ -471,7 +471,7 @@ fluidPage(
                                   verbatimTextOutput("ra_rates_output"),
                                   verbatimTextOutput("ra_value_view_output"),
                                   verbatimTextOutput("ra_income_view_output"),
-                                  vebratimTextoutput("ra_scale_output")
+                                  verbatimTextOutput("ra_scale_output")
                            )
                          ),
                          style = "margin-bottom: 20px; padding: 19px; border: 1px solid #e5e5e5; border-radius:4px;"
