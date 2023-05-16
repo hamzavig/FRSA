@@ -1,0 +1,13 @@
+name: FinancialRiskScenarioAnalysis
+title: FinancialRiskScenarioAnalysis
+username:
+account: hamzavig
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8923018
+bundleId: 7226734
+url: https://hamzavig.shinyapps.io/FinancialRiskScenarioAnalysis/
+when: 1684277326.16192
+lastSyncTime: 1684277326.16193
+asMultiple: FALSE
+asStatic: FALSE
