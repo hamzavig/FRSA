@@ -477,6 +477,7 @@ fluidPage(
                          style = "margin-bottom: 20px; padding: 19px; border: 1px solid #e5e5e5; border-radius:4px;"
                        )
                      ),
+                     verbatimTextOutput("debug"),
                      uiOutput("ra_uiOutput")
                    )
                  )

@@ -334,8 +334,6 @@ function(input, output, session) {
   market_obj_vec <- reactiveVal(c())
   market_obj_dr_vec <- reactiveVal(c())
   
-  default_inst_vec <- reactiveVal(c())
-  
   # Institution Creation / Deletion ------------------
   
   observeEvent(input$inst_add, {
@@ -1292,14 +1290,13 @@ function(input, output, session) {
   )
   
   
-  
-  
   # Risk Analysis ------------------------------------
   
   scenarios <- reactiveVal(c())
   scenario_values_ls <- reactiveVal(list())
   current_scenario <- reactiveVal()
-  fs_scenarios <- reactiveVal(c())
+  inst_fs_combinations <- reactiveVal(c())
+  default_inst_vec <- reactiveVal(c())
   
   observe({
     updateSelectInput(session, "ra_inst", choices = institution_vec())
@@ -1431,14 +1428,6 @@ function(input, output, session) {
       scenario_values$income[[i]] <- income(scenario_values$instList[[i]], tb, type = scenario_values$incomeType, scale = scenario_values$scale)
     }
     
-    fs_scenario_vec <- c()
-    for (i in seq_along(scenario_values$instList)[-length(scenario_values$instList)]) {
-      for (j in (i+1):length(scenario_values$instList)) {
-        fs_scenario_vec <- c(fs_scenario_vec, paste(scenario_values$instList[[i]]$name, "vs", scenario_values$instList[[j]]$name, sep = " "))
-      }
-    }
-    fs_scenarios(fs_scenario_vec)
-    
     scenario_ls <- scenario_values_ls()
     scenario_ls <- append(scenario_ls, list(scenario_values))
     scenario_values_ls(scenario_ls)
@@ -1449,111 +1438,109 @@ function(input, output, session) {
     if(input$ra_view != ''){
       scenario_id <- which(scenarios() == input$ra_view)
       scenario_values <- scenario_values_ls()[[scenario_id]]
-      
-      fs_scenario_vec <- c()
-      for (i in seq_along(scenario_values$instList)[-length(scenario_values$instList)]) {
-        for (j in (i+1):length(scenario_values$instList)) {
-          fs_scenario_vec <- c(fs_scenario_vec, paste(scenario_values$instList[[i]]$name, "vs", scenario_values$instList[[j]]$name, sep = " "))
-        }
-      }
-      fs_scenarios(fs_scenario_vec)
-      
-      default_insts <- sapply(scenario_values$instList[-1], function(inst) inst$name)
-      default_inst_vec(default_insts)
+      current_scenario(scenario_values)
       
       output$ra_inst_output <- renderText({
-        paste("Selected Institution: ", scenario_values$instList[[1]]$name)
+        paste("Selected Institution: ", current_scenario()$instList[[1]]$name)
       })
       
       output$ra_scenario_output <- renderText({
-        paste("Risk Scenario: ", scenario_values$scenario)
+        paste("Risk Scenario: ", current_scenario()$scenario)
       })
       
       output$ra_value_view_output <- renderText({
-        paste("Value View: ", scenario_values$valueType)
+        paste("Value View: ", current_scenario()$valueType)
       })
       
       output$ra_mocs_output <- renderText({
-        paste("Market Objects: ", paste(scenario_values$marketObjects, collapse = ", "))
+        paste("Market Objects: ", paste(current_scenario()$marketObjects, collapse = ", "))
       })
       
       output$ra_sub_scenario_output <- renderText({
-        paste("Sub Scenario: ", scenario_values$subScenario)
+        paste("Sub Scenario: ", current_scenario()$subScenario)
       })
       
       output$ra_rates_output <- renderText({
-        if(scenario_values$scenario == 'Interest Rate Risk'){
-          paste("Shift Amount(s):", paste(scenario_values$shiftAmounts, collapse = ", "))
+        if(current_scenario()$scenario == 'Interest Rate Risk'){
+          paste("Shift Amount(s):", paste(current_scenario()$shiftAmounts, collapse = ", "))
         }else{
-          paste("Recovery Rate(s):", paste(scenario_values$recoveryRates, collapse = ", "))
+          paste("Recovery Rate(s):", paste(current_scenario()$recoveryRates, collapse = ", "))
         }
-        
       })
       
       output$ra_income_view_output <- renderText({
-        paste("Income View: ", scenario_values$incomeType)
+        paste("Income View: ", current_scenario()$incomeType)
       })
       
       output$ra_scale_output <- renderText({
-        paste("Scale: ", scenario_values$scaleWritten)
+        paste("Scale: ", current_scenario()$scaleWritten)
       })
       
       output$ra_from_output <- renderText({
-        paste("From: ", format(scenario_values$from, "%Y-%m-%d"))
+        paste("From: ", format(current_scenario()$from, "%Y-%m-%d"))
       })
       
       output$ra_to_output <- renderText({
-        paste("To: ", format(scenario_values$to, "%Y-%m-%d"))
+        paste("To: ", format(current_scenario()$to, "%Y-%m-%d"))
       })
       
-      if(scenario_values$scenario == 'Interest Rate Risk'){
+      fs_combinations <- c()
+      for (i in seq_along(current_scenario()$instList)[-length(current_scenario()$instList)]) {
+        for (j in (i+1):length(current_scenario()$instList)) {
+          fs_combinations <- c(fs_combinations, paste(current_scenario()$instList[[i]]$name, "vs", current_scenario()$instList[[j]]$name, sep = " "))
+        }
+      }
+      inst_fs_combinations(fs_combinations)
+      
+      if(current_scenario()$scenario == 'Default Risk'){
+        default_insts <- sapply(current_scenario()$instList[-1], function(inst) inst$name)
+        default_inst_vec(default_insts)
+      }
+      
+      if(current_scenario()$scenario == 'Interest Rate Risk'){
         output$ra_uiOutput <- renderUI({
           tagList(
             tabsetPanel(
-              tabPanel("Market",
-                       fluidRow(
-                         column(
-                           width = 12,
-                           selectInput("ra_moc_view", NULL, choices = scenario_values$marketObjects, width = '100%'),
-                           plotOutput("ra_moc_plot"),
-                           br(),
-                           DTOutput("ra_moc_curves_df"),
-                           br()
-                         )
-                       )
+              tabPanel(
+                "Market",
+                fluidRow(
+                  column(
+                    width = 12,
+                    selectInput("ra_moc_view", NULL, choices = current_scenario()$marketObjects, width = '100%'),
+                    plotOutput("ra_moc_plot"),
+                    br(),
+                    DTOutput("ra_moc_curves_df"),
+                    br()
+                  )
+                )
               ),
-              tabPanel("Financial Statements",
-                       br(),
-                       fluidRow(
-                         column(
-                           width = 6,
-                           selectInput("ra_financial_statement_view", NULL, choices = c("Value", "Income"), width = "100%")
-                         ),
-                         column(
-                           width = 6,
-                           selectInput("ra_financial_statement_scenario", NULL, choices = fs_scenarios(), width = "100%")
-                         )
-                       ),
-                       fluidRow(
-                         column(
-                           width = 4,
-                           h4('Source Statement'),
-                           verbatimTextOutput("ra_financial_statement_1")
-                         ),
-                         column(
-                           width = 4,
-                           h4('Target Statement'),
-                           verbatimTextOutput("ra_financial_statement_2")
-                         ),
-                         column(
-                           width = 4,
-                           h4('Difference'),
-                           verbatimTextOutput("ra_financial_statement_3")
-                         )
-                       )
-              ),
-              tabPanel("Sensitivity",
-                       uiOutput("ra_sensitivity_uiOutput")
+              tabPanel(
+                "Financial Statements",
+                br(),
+                fluidRow(
+                  column(
+                    width = 6,
+                    selectInput("ra_financial_statement_view", NULL, choices = c("Value", "Income"), width = "100%")
+                  ),
+                  column(
+                    width = 6,
+                    selectInput("ra_financial_statement_scenario", NULL, choices = inst_fs_combinations(), width = "100%")
+                  )
+                ),
+                fluidRow(
+                  column(
+                    width = 4,
+                    verbatimTextOutput("ra_financial_statement_1")
+                  ),
+                  column(
+                    width = 4,
+                    verbatimTextOutput("ra_financial_statement_2")
+                  ),
+                  column(
+                    width = 4,
+                    verbatimTextOutput("ra_financial_statement_3")
+                  )
+                )
               )
             )
           )
@@ -1562,155 +1549,79 @@ function(input, output, session) {
         output$ra_uiOutput <- renderUI({
           tagList(
             tabsetPanel(
-              tabPanel("Market",
-                       br(),
-                       fluidRow(
-                         column(
-                           width = 12,
-                           selectInput("ra_moc_view", NULL, choices = scenario_values$marketObjects, width = '100%'),
-                           plotOutput("ra_moc_plot"),
-                           br(),
-                           DTOutput("ra_dr_moc_curves_df"),
-                           br()
-                         )
-                       )
+              tabPanel(
+                "Market",
+                fluidRow(
+                  column(
+                    width = 12,
+                    selectInput("ra_moc_view", NULL, choices = current_scenario()$marketObjects, width = '100%'),
+                    plotOutput("ra_moc_plot"),
+                    br(),
+                    DTOutput("ra_moc_curves_df"),
+                    br()
+                  )
+                )
               ),
-              tabPanel("Default Contracts",
-                       br(),
-                       fluidRow(
-                         column(
-                           width = 12,
-                           selectInput("ra_default_inst_view", NULL, choices = default_inst_vec(), width = "100%"),
-                           DTOutput("ra_default_contracts_df"),
-                           br()
-                         )
-                       )
+              tabPanel(
+                "Default Contracts",
+                br(),
+                fluidRow(
+                  column(
+                    width = 12,
+                    selectInput("ra_default_inst_view", NULL, choices = default_inst_vec(), width = "100%"),
+                    DTOutput("ra_default_contracts_df"),
+                    br()
+                  )
+                )
               ),
-              tabPanel("Financial Statements",
-                       br(),
-                       fluidRow(
-                         column(
-                           width = 6,
-                           selectInput("ra_financial_statement_view", NULL, choices = c("Value", "Income"), width = "100%")
-                         ),
-                         column(
-                           width = 6,
-                           selectInput("ra_financial_statement_scenario", NULL, choices = fs_scenarios(), width = "100%")
-                         )
-                       ),
-                       fluidRow(
-                         column(
-                           width = 4,
-                           verbatimTextOutput("ra_financial_statement_1")
-                         ),
-                         column(
-                           width = 4,
-                           verbatimTextOutput("ra_financial_statement_2")
-                         ),
-                         column(
-                           width = 4,
-                           verbatimTextOutput("ra_financial_statement_3")
-                         )
-                       )
+              tabPanel(
+                "Financial Statements",
+                br(),
+                fluidRow(
+                  column(
+                    width = 6,
+                    selectInput("ra_financial_statement_view", NULL, choices = c("Value", "Income"), width = "100%")
+                  ),
+                  column(
+                    width = 6,
+                    selectInput("ra_financial_statement_scenario", NULL, choices = inst_fs_combinations(), width = "100%")
+                  )
+                ),
+                fluidRow(
+                  column(
+                    width = 4,
+                    verbatimTextOutput("ra_financial_statement_1")
+                  ),
+                  column(
+                    width = 4,
+                    verbatimTextOutput("ra_financial_statement_2")
+                  ),
+                  column(
+                    width = 4,
+                    verbatimTextOutput("ra_financial_statement_3")
+                  )
+                )
               )
             )
           )
         })
       }
       
-    }
-  })
-  
-  
-  observeEvent(input$ra_default_inst_view, {
-  
-    if(!is.null(input$ra_default_inst_view) ||
-       input$ra_default_inst_view != ''){
-      
-      scenario_id <- which(scenarios() == input$ra_view)
-      scenario_values <- scenario_values_ls()[[scenario_id]]
-      
-      inst_id <- which(default_inst_vec() == input$ra_default_inst_view) + 1
-      inst <- scenario_values$instList[[inst_id]]
-
-      default_ct_df <- getContractsAsDataFrames(inst, 'Default')
-      
-      output$ra_default_contracts_df <- renderDataTable({
-            default_ct_df %>% datatable(options = list(
-              scrollX = TRUE,
-              columnDefs = list(list(className = "nowrap", targets = "_all"))
-            ),
-            selection = list(mode = 'single')
-            )
-          })
-      
-    }
-  })
-  
-  observeEvent(input$ra_financial_statement_scenario, {
-    
-    if(!is.null(input$ra_financial_statement_scenario) ||
-       input$ra_financial_statement_scenario != ''){
-      
-      scenario_id <- which(scenarios() == input$ra_view)
-      scenario_values <- scenario_values_ls()[[scenario_id]]
-      
-      fs_names <- unlist(strsplit(input$ra_financial_statement_scenario, " vs "))
-      
-      indices <- sapply(fs_names, function(fs_name){
-        for (i in seq_along(scenario_values$instList)) {
-          if (scenario_values$instList[[i]]$root$name == fs_name) {
-            return(i)
-          }
-        }
-      })
-      
-      output$ra_financial_statement_1 <- renderPrint({
-        if(input$ra_financial_statement_view == 'Value'){
-          print(scenario_values$value[[indices[[1]]]])
-        }else{
-          print(scenario_values$income[[indices[[1]]]])
-        }
-      })
-      
-      output$ra_financial_statement_2 <- renderPrint({
-        if(input$ra_financial_statement_view == 'Value'){
-          print(scenario_values$value[[indices[[2]]]])
-        }else{
-          print(scenario_values$income[[indices[[2]]]])
-        }
-      })
-      
-      output$ra_financial_statement_3 <- renderPrint({
-        if(input$ra_financial_statement_view == 'Value'){
-          print(scenario_values$value[[indices[[1]]]] - scenario_values$value[[indices[[2]]]])
-        }else{
-          print(scenario_values$income[[indices[[1]]]] - scenario_values$income[[indices[[2]]]])
-        }
-      })
-    }
-    
-  })
-  
-  observeEvent(input$ra_moc_view, {
-
-    if(!is.null(input$ra_moc_view) || input$ra_moc_view != ''){
-
-      scenario_id <- which(scenarios() == input$ra_view)
-      scenario_values <- scenario_values_ls()[[scenario_id]]
-
-      if(scenario_values$scenario == 'Interest Rate Risk'){
-        shift_id <- which(scenario_values$marketObjects == input$ra_moc_view)
-        ycShift <- scenario_values$ycShifts[[shift_id]]
-
+      if(current_scenario()$scenario == 'Interest Rate Risk'){
+        ycShift <- current_scenario()$ycShifts[[1]]
+        
         output$ra_moc_plot <- renderPlot({
           plotMultiShift(ycShift)
         })
         
         ycShiftLabels <- sapply(ycShift, function(yc) yc$label)
+        ycShiftReferenceDates <- sapply(ycShift, function(yc) yc$ReferenceDate)
+        ycShiftDayCountConventions <- sapply(ycShift, function(yc) yc$DayCountConvention)
         
-        curves_df <- data.frame(MarketObject = ycShiftLabels)
-
+        curves_df <- data.frame(MarketObject = ycShiftLabels,
+                                ReferenceDate = ycShiftReferenceDates,
+                                DayCountConvention = ycShiftDayCountConventions)
+        
         for(i in 1:length(ycShift)){
           for(j in 1:length(ycShift[[i]]$Rates)){
             curves_df[i, ycShift[[i]]$Tenors[j]] <- ycShift[[i]]$Rates[j]
@@ -1718,30 +1629,6 @@ function(input, output, session) {
         }
         
         output$ra_moc_curves_df <- renderDataTable({
-            curves_df %>% datatable(options = list(
-              scrollX = TRUE,
-              columnDefs = list(list(className = "nowrap", targets = "_all"))
-            ),
-            selection = list(mode = 'single')
-            )
-          })
-        
-        
-      }else{
-        dc_id <- which(scenario_values$marketObjects == input$ra_moc_view)
-        dcObject <- scenario_values$dcObjects[[dc_id]]
-
-        output$ra_moc_plot <- renderPlot({
-          plot(dcObject)
-        })
-        
-        curves_df <- data.frame(MarketObject = dcObject$label)
-
-        for(i in 1:length(dcObject$Rates)){
-          curves_df[dcObject$Tenors[i]] <- dcObject$Rates[i]
-        }
-        
-        output$ra_dr_moc_curves_df <- renderDataTable({
           curves_df %>% datatable(options = list(
             scrollX = TRUE,
             columnDefs = list(list(className = "nowrap", targets = "_all"))
@@ -1750,9 +1637,182 @@ function(input, output, session) {
           )
         })
         
-      }
-    }
+      }else{
+        dcObject <- current_scenario()$dcObjects[[1]]
+        
+        output$ra_moc_plot <- renderPlot({
+          plot(dcObject)
+        })
+        
+        curves_df <- data.frame(MarketObject = dcObject$label,
+                                ReferenceDate = dcObject$ReferenceDate,
+                                DayCountConvention = dcObject$DayCountConvention)
+        
+        for(i in 1:length(dcObject$Rates)){
+          curves_df[dcObject$Tenors[i]] <- dcObject$Rates[i]
+        }
+        
+        output$ra_moc_curves_df <- renderDataTable({
+          curves_df %>% datatable(options = list(
+            scrollX = TRUE,
+            columnDefs = list(list(className = "nowrap", targets = "_all"))
+          ),
+          selection = list(mode = 'single')
+          )
+        })
 
+        inst <- current_scenario()$instList[[2]]
+        
+        default_ct_df <- getContractsAsDataFrames(inst, 'Default')
+        
+        output$ra_default_contracts_df <- renderDataTable({
+          default_ct_df %>% datatable(options = list(
+            scrollX = TRUE,
+            columnDefs = list(list(className = "nowrap", targets = "_all"))
+          ),
+          selection = list(mode = 'single')
+          )
+        })
+        
+      }
+      
+      fs_names <- unlist(strsplit(inst_fs_combinations()[1], " vs "))
+      
+      indices <- sapply(fs_names, function(fs_name){
+        for (i in seq_along(current_scenario()$instList)) {
+          if (current_scenario()$instList[[i]]$root$name == fs_name) {
+            return(i)
+          }
+        }
+      })
+      
+      output$ra_financial_statement_1 <- renderPrint({
+        print(current_scenario()$value[[indices[[1]]]])
+      })
+      
+      output$ra_financial_statement_2 <- renderPrint({
+        print(current_scenario()$value[[indices[[2]]]])
+      })
+      
+      output$ra_financial_statement_3 <- renderPrint({
+        print(current_scenario()$value[[indices[[1]]]] - current_scenario()$value[[indices[[2]]]])
+      })
+      
+    }
+  })
+  
+  observeEvent(input$ra_moc_view, {
+    
+    if(current_scenario()$scenario == 'Interest Rate Risk'){
+      shift_id <- which(current_scenario()$marketObjects == input$ra_moc_view)
+      ycShift <- current_scenario()$ycShifts[[shift_id]]
+      
+      output$ra_moc_plot <- renderPlot({
+        plotMultiShift(ycShift)
+      })
+      
+      ycShiftLabels <- sapply(ycShift, function(yc) yc$label)
+      ycShiftReferenceDates <- sapply(ycShift, function(yc) yc$ReferenceDate)
+      ycShiftDayCountConventions <- sapply(ycShift, function(yc) yc$DayCountConvention)
+      
+      curves_df <- data.frame(MarketObject = ycShiftLabels,
+                              ReferenceDate = ycShiftReferenceDates,
+                              DayCountConvention = ycShiftDayCountConventions)
+      
+      for(i in 1:length(ycShift)){
+        for(j in 1:length(ycShift[[i]]$Rates)){
+          curves_df[i, ycShift[[i]]$Tenors[j]] <- ycShift[[i]]$Rates[j]
+        }
+      }
+      
+      output$ra_moc_curves_df <- renderDataTable({
+        curves_df %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single')
+        )
+      })
+    }else{
+      dc_id <- which(current_scenario()$marketObjects == input$ra_moc_view)
+      dcObject <- current_scenario()$dcObjects[[dc_id]]
+      
+      output$ra_moc_plot <- renderPlot({
+        plot(dcObject)
+      })
+      
+      curves_df <- data.frame(MarketObject = dcObject$label,
+                              ReferenceDate = dcObject$ReferenceDate,
+                              DayCountConvention = dcObject$DayCountConvention)
+      
+      for(i in 1:length(dcObject$Rates)){
+        curves_df[dcObject$Tenors[i]] <- dcObject$Rates[i]
+      }
+      
+      output$ra_moc_curves_df <- renderDataTable({
+        curves_df %>% datatable(options = list(
+          scrollX = TRUE,
+          columnDefs = list(list(className = "nowrap", targets = "_all"))
+        ),
+        selection = list(mode = 'single')
+        )
+      })
+    }
+    
+  })
+  
+  observeEvent(input$ra_default_inst_view, {
+    
+    inst_id <- which(default_inst_vec() == input$ra_default_inst_view) + 1
+    inst <- current_scenario()$instList[[inst_id]]
+    
+    default_ct_df <- getContractsAsDataFrames(inst, 'Default')
+    
+    output$ra_default_contracts_df <- renderDataTable({
+      default_ct_df %>% datatable(options = list(
+        scrollX = TRUE,
+        columnDefs = list(list(className = "nowrap", targets = "_all"))
+      ),
+      selection = list(mode = 'single')
+      )
+    })
+  })
+
+  observeEvent(input$ra_financial_statement_scenario, {
+    
+      fs_names <- unlist(strsplit(input$ra_financial_statement_scenario, " vs "))
+      
+      indices <- sapply(fs_names, function(fs_name){
+        for (i in seq_along(current_scenario()$instList)) {
+          if (current_scenario()$instList[[i]]$root$name == fs_name) {
+            return(i)
+          }
+        }
+      })
+      
+      output$ra_financial_statement_1 <- renderPrint({
+        if(input$ra_financial_statement_view == 'Value'){
+          print(current_scenario()$value[[indices[[1]]]])
+        }else{
+          print(current_scenario()$income[[indices[[1]]]])
+        }
+      })
+      
+      output$ra_financial_statement_2 <- renderPrint({
+        if(input$ra_financial_statement_view == 'Value'){
+          print(current_scenario()$value[[indices[[2]]]])
+        }else{
+          print(current_scenario()$income[[indices[[2]]]])
+        }
+      })
+      
+      output$ra_financial_statement_3 <- renderPrint({
+        if(input$ra_financial_statement_view == 'Value'){
+          print(current_scenario()$value[[indices[[1]]]] - current_scenario()$value[[indices[[2]]]])
+        }else{
+          print(current_scenario()$income[[indices[[1]]]] - current_scenario()$income[[indices[[2]]]])
+        }
+      })
   })
   
   #---------------------------------------------------
