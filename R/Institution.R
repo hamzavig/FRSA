@@ -650,7 +650,7 @@ setMethod(f = "value", signature = c("Node", "timeDate", "ANY"),
             # Compute value for whole tree
             clearAnalytics(object, "value")
             
-            object$Do(fun=fAnalytics, "value", by=as.character(by), type=type, filterFun=isLeaf)
+            object$Do(fun=fAnalytics, "value", by=as.character(by), type=type, method=method, filterFun=isLeaf)
             
             aggregateAnalytics(object, "value")
             
