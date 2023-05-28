@@ -44,7 +44,7 @@ setMethod(f = "EventSeries", signature = c(),
           })
 
 setMethod(f = "EventSeries", signature = c("ContractType", "character", "RiskFactorConnector"),
-          definition = function(object, processor, riskFactors){
+          definition = function(object, processor, yc){
             
             # cast contract as list of list
             contracts <- list(object)

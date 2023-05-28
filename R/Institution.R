@@ -620,13 +620,17 @@ getContractsAsDataFrames <- function(institution, node, ...) {
 #' @include TimeBuckets.R
 #' @rdname val-methods
 #' @export
-setMethod(f = "value", signature = c("Node", "timeBuckets", "character"),
-          definition = function(object, by, type, scale=1, digits=2) {
-
+setMethod(f = "value", signature = c("Node", "timeBuckets", "ANY"),
+          definition = function(object, by, type, method, scale=1, digits=2) {
+            
+            if (missing(method)) {
+              method <- DcEngine()
+            }
             if (missing(type)) {
               type <- "nominal"
             }
-            res <- value(object, as.timeDate(by), type=type, scale=scale, digits=digits)
+            res <- value(object, as.timeDate(by), type=type, method=method,
+                         scale=scale, digits=digits)
             colnames(res) <- by@breakLabs
             return(res)
           })
@@ -635,8 +639,11 @@ setMethod(f = "value", signature = c("Node", "timeBuckets", "character"),
 #' @include Value.R
 #' @rdname val-methods
 #' @export
-setMethod(f = "value", signature = c("Node", "timeDate", "character"),
-          definition = function(object, by, type, scale=1, digits=2) {
+setMethod(f = "value", signature = c("Node", "timeDate", "ANY"),
+          definition = function(object, by, type, method, scale=1, digits=2) {
+            if (missing(method)) {
+              method <- DcEngine()
+            }
             if (missing(type)) {
               type <- "nominal"
             }

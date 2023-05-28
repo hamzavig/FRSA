@@ -41,7 +41,7 @@
 #' @docType methods
 #' @rdname val-methods
 
-setGeneric(name = "value", def = function(object, by, type, ...){
+setGeneric(name = "value", def = function(object, by, type, method, ...){
   standardGeneric("value")
 })
 
@@ -51,8 +51,8 @@ setGeneric(name = "value", def = function(object, by, type, ...){
 #' @include EventSeries.R
 #' @export
 #' @rdname val-methods
-setMethod(f = "value", signature = c("EventSeries", "character", "character"),
-          definition = function(object, by, type, digits = 2, ...){
+setMethod(f = "value", signature = c("EventSeries", "character", "character", "DiscountingEngine"),
+          definition = function(object, by, type, method, digits = 2, ...){
             if(type=="nominal") {
               val = sapply(by, function(ad) {
                 evs = data.frame(
@@ -71,11 +71,10 @@ setMethod(f = "value", signature = c("EventSeries", "character", "character"),
               })
             } else if(type %in% c("market")) {
               
-              if(length(object$riskFactors) != 0){
-                yc <- object$riskFactors[[1]]
-              }else{
-                yc <- NULL
-              }
+              # add spread to interest rate
+              spread <- get(method, "dc.spread")
+              dc <- get(method, "dc.object")
+              set(dc, list(Rates=get(dc, "Rates") + spread))
               
               val = sapply(by, function(ad) { # loop over elements in "by"
                 evs = data.frame(
@@ -92,13 +91,9 @@ setMethod(f = "value", signature = c("EventSeries", "character", "character"),
                   return(0.0)
                 } else {
                   cfs = evs.sub$values
-                  if(!is.null(yc)){
-                    dts = as.character(evs.sub$times)
-                    dfs = discountFactors(yc, from=ad, to=dts)
-                    return(as.numeric(cfs%*%dfs))
-                  }else{
-                    return(as.numeric(cfs%*%rep(1, length(cfs))))
-                  }
+                  dts = as.character(evs.sub$times)
+                  dfs = discountFactors(dc, from=ad, to=dts)
+                  return( as.numeric (cfs%*%dfs ))
                 }
               })
             } else {
