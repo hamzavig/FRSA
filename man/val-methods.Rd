@@ -3,18 +3,18 @@
 \docType{methods}
 \name{value}
 \alias{value}
-\alias{value,EventSeries,character,character-method}
-\alias{value,Node,timeBuckets,character-method}
-\alias{value,Node,timeDate,character-method}
+\alias{value,EventSeries,character,character,DiscountingEngine-method}
+\alias{value,Node,timeBuckets,ANY,ANY-method}
+\alias{value,Node,timeDate,ANY,ANY-method}
 \title{Derive the value at AD0 of a contract}
 \usage{
-value(object, by, type, ...)
+value(object, by, type, method, ...)
 
-\S4method{value}{EventSeries,character,character}(object, by, type, digits = 2, ...)
+\S4method{value}{EventSeries,character,character,DiscountingEngine}(object, by, type, method, digits = 2, ...)
 
-\S4method{value}{Node,timeBuckets,character}(object, by, type, scale = 1, digits = 2)
+\S4method{value}{Node,timeBuckets,ANY,ANY}(object, by, type, method, scale = 1, digits = 2)
 
-\S4method{value}{Node,timeDate,character}(object, by, type, scale = 1, digits = 2)
+\S4method{value}{Node,timeDate,ANY,ANY}(object, by, type, method, scale = 1, digits = 2)
 }
 \arguments{
 \item{object}{object The \code{ContractType} or \code{EventSeries}-object for which to derive the value}
