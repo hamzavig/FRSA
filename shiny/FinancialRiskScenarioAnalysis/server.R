@@ -1305,6 +1305,7 @@ function(input, output, session) {
   observe({
     updateSelectInput(session, inputId = "ra_mocs", choices = market_obj_vec())
     updateSelectInput(session, inputId = "ra_dr_mocs", choices = market_obj_dr_vec())
+    updateSelectInput(session, inputId = "ra_discount_engine", choices = market_obj_vec())
   })
   
   observeEvent(input$ra_start, {
@@ -1372,7 +1373,6 @@ function(input, output, session) {
           yieldCurve_shifted <- append(yieldCurve_shifted, yc)
         }
       }
-      
       rfConnector <- RFConn(yieldCurve_shifted)
     }else{
       inst$Assets$AddChild('Default')
@@ -1391,6 +1391,17 @@ function(input, output, session) {
       }))
       
       rfConnector <- RFConn(yieldCurve_ls())
+    }
+    
+    if(scenario_values$valueType == 'market'){
+      discountingYC <- Filter(Negate(is.null), lapply(yieldCurve_ls(), function(yc){
+        if(yc$label %in% input$ra_discount_engine){
+          return(yc)
+        }
+      }))
+      scenario_values$discountingObject <- DcEngine(RFConn(discountingYC))
+    }else{
+      scenario_values$discountingObject <- DcEngine()
     }
     
     scenario_values$instList <- list(inst)
@@ -1424,7 +1435,7 @@ function(input, output, session) {
     
     for(i in 1:length(scenario_values$instList)){
       scenario_values$instList[[i]] <- events(object = scenario_values$instList[[i]], riskFactors = rfConnector)
-      scenario_values$value[[i]] <- value(scenario_values$instList[[i]], tb, type = scenario_values$valueType, scale = scenario_values$scale)
+      scenario_values$value[[i]] <- value(scenario_values$instList[[i]], tb, type = scenario_values$valueType, method = scenario_values$discountingObject, scale = scenario_values$scale)
       scenario_values$income[[i]] <- income(scenario_values$instList[[i]], tb, type = scenario_values$incomeType, scale = scenario_values$scale)
     }
     
@@ -1813,6 +1824,43 @@ function(input, output, session) {
           print(current_scenario()$income[[indices[[1]]]] - current_scenario()$income[[indices[[2]]]])
         }
       })
+  })
+  
+  observeEvent(input$ra_financial_statement_view, {
+    
+    fs_names <- unlist(strsplit(input$ra_financial_statement_scenario, " vs "))
+    
+    indices <- sapply(fs_names, function(fs_name){
+      for (i in seq_along(current_scenario()$instList)) {
+        if (current_scenario()$instList[[i]]$root$name == fs_name) {
+          return(i)
+        }
+      }
+    })
+    
+    output$ra_financial_statement_1 <- renderPrint({
+      if(input$ra_financial_statement_view == 'Value'){
+        print(current_scenario()$value[[indices[[1]]]])
+      }else{
+        print(current_scenario()$income[[indices[[1]]]])
+      }
+    })
+    
+    output$ra_financial_statement_2 <- renderPrint({
+      if(input$ra_financial_statement_view == 'Value'){
+        print(current_scenario()$value[[indices[[2]]]])
+      }else{
+        print(current_scenario()$income[[indices[[2]]]])
+      }
+    })
+    
+    output$ra_financial_statement_3 <- renderPrint({
+      if(input$ra_financial_statement_view == 'Value'){
+        print(current_scenario()$value[[indices[[1]]]] - current_scenario()$value[[indices[[2]]]])
+      }else{
+        print(current_scenario()$income[[indices[[1]]]] - current_scenario()$income[[indices[[2]]]])
+      }
+    })
   })
   
   #---------------------------------------------------

@@ -405,7 +405,7 @@ fluidPage(
                        condition = "input.ra_scenario == 'Interest Rate Risk'",
                        selectInput("ra_sub_scenario", "Interest Rate Risk Scenario", choices = c('Parallel Shift')),
                        selectInput("ra_mocs", "Market Objects", choices = NULL, multiple = TRUE),
-                       p("Please add new Market Object in tab 'Market' if you wish to proceed with different Risk Factor Object for the valuation."),
+                       p("Please add new Market Object in tab 'Market' if you wish to proceed with different Market Object."),
                        fluidRow(
                          id = "ra_irr_shift_amounts",
                          column(3, numericInput("ra_irr_shift_amount1", label = "Shift 1", value = 0.01, step = 0.001, min = 0.001, max = 1.0)),
@@ -418,7 +418,7 @@ fluidPage(
                        condition = "input.ra_scenario == 'Default Risk'",
                        selectInput("ra_dr_sub_scenario", "Default Risk Scenario", choices = c('Probability')),
                        selectInput("ra_dr_mocs", "Market Objects", choices = NULL, multiple = TRUE),
-                       p("Please add new Market Object in tab 'Market' if you wish to proceed with different Risk Factor Object for the simulation."),
+                       p("Please add a new Market Object in tab 'Market' if you wish to proceed with different Risk Factor Object for the simulation."),
                        fluidRow(
                          id = "ra_dr_recovery_rates",
                          column(3, numericInput("ra_dr_recovery_rate1", label = "Recovery 1", value = 0.01, step = 0.001, min = 0.001, max = 1.0)),
@@ -429,6 +429,11 @@ fluidPage(
                        dateInput("ra_dr_from", "Default From", value = as.Date(paste0(format(Sys.Date() + years(1), "%Y"), "-01-01")), format = "yyyy-mm-dd")
                      ),
                      selectInput("ra_value_view", "Value View", choices = c("nominal", "market")),
+                     conditionalPanel(
+                       condition = "input.ra_value_view == 'market'",
+                       selectInput("ra_discount_engine", "Discounting Object", choices = NULL),
+                       p("Please add a new Discounting Object in tab 'Market' if you wish to proceed with different Discounting Object.")
+                     ),
                      selectInput("ra_income_view", "Income View", choices = c("marginal", "cumulative")),
                      selectInput("ra_scale", "Scale", choices = c("in millions", "in thousands", "no scale")),
                      dateInput("ra_from", "From", value = as.Date(paste0(format(Sys.Date(), "%Y"), "-01-01")), format = "yyyy-mm-dd"),
