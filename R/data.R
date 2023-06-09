@@ -19,7 +19,7 @@
 
 #' @title defaultCurves
 #' @description This datasheet holds predefined Default Curves.
-#' @format A data frame with 2 rows and 17 variables:
+#' @format A data frame with 3 rows and 17 variables:
 #' \describe{
 #'   \item{\code{rfType}}{character Indicates risk factor type.}
 #'   \item{\code{label}}{character Adds a label/name to the risk factor object.}
@@ -44,7 +44,7 @@
 
 #' @title annuities
 #' @description This datasheet holds predefined financial contracts forming a portfolio of annuities for an institution.
-#' @format A data frame with 27 rows and 36 variables:
+#' @format A data frame with 22 rows and 37 variables:
 #' \describe{
 #'   \item{\code{node}}{character The node defines the leaf of the financial instrument.}
 #'   \item{\code{calendar}}{character Calendar defines the non-working days which affect the dates of contract events.}
@@ -89,7 +89,7 @@
 
 #' @title principalAtMaturities
 #' @description This datasheet holds predefined financial contracts forming a portfolio of principalAtMaturities for an institution.
-#' @format A data frame with 27 rows and 36 variables:
+#' @format A data frame with 4 rows and 61 variables:
 #' \describe{
 #'   \item{\code{node}}{character The node defines the leaf of the financial instrument.}
 #'   \item{\code{calendar}}{character Calendar defines the non-working days which affect the dates of contract events.}

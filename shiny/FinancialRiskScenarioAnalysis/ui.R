@@ -496,7 +496,7 @@ fluidPage(
           width = 3,
           selectInput("dataset",
             "Choose a dataset:",
-            choices = c("annuities", "yieldCurves")
+            choices = c("yieldCurves", "defaultCurves", "annuities", "principalAtMaturities", "operations")
           ),
           downloadButton("downloadData", "Download")
         ),
