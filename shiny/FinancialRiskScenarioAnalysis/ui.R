@@ -516,7 +516,6 @@ fluidPage(
           )
         )
       )
-    ),
-    tabPanel("Instructions")
+    )
   ) # close navbarPage
 ) # close fluidPage

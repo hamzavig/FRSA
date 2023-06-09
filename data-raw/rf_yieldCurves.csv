@@ -1,3 +1,4 @@
-﻿rfType,label,referenceDate,tenor.1,rate.1,tenor.2,rate.2,tenor.3,rate.3,tenor.4,rate.4,tenor.5,rate.5
-YieldCurve,YC_Default,2017-01-01,1Y,0.005,2Y,0.01,5Y,0.02,10Y,0.03,15Y,0.04
-YieldCurve,YC_Shifted,2017-01-01,1Y,0.005,2Y,0.01,5Y,0.02,10Y,0.03,15Y,0.04
+rfType,label,referenceDate,tenor.1,rate.1,tenor.2,rate.2,tenor.3,rate.3,tenor.4,rate.4
+YieldCurve,YC_Global,2020-01-01,1Y,0.004,2Y,0.01,5Y,0.02,10Y,0.03
+YieldCurve,YC_CH_AAA,2019-01-01,1Y,0.008,2Y,0.01,6Y,0.04,8Y,0.05
+YieldCurve,YC_USA_AA,2020-01-01,1Y,0.006,3Y,0.009,7Y,0.02,11Y,0.025

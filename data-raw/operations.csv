@@ -1,0 +1,11 @@
+node,contractType,contractID,contractRole,currency,notionalPrincipal,nominalInterestRate,initialExchangeDate,maturityDate,repetition,frequency,times,inverted,description
+FixedAssets,Investments,AFA0001,long,CHF,8500000,0,2022-01-01,9999-01-01,,1 years,51,FALSE,Fixed Asset: Real Estate 1 with linear deprecation over 50 years
+FixedAssets,Investments,AFA0002,long,CHF,3500000,0,2022-01-01,9999-01-01,,1 years,51,FALSE,Fixed Asset: Real Estate 2 with linear deprecation over 50 years
+FixedAssets,Investments,AFA0003,long,CHF,6000000,0,2022-01-01,9999-01-01,,1 years,51,FALSE,Fixed Asset: Real Estate 3 with linear deprecation over 50 years
+FixedAssets,Investments,AFA0004,long,CHF,2000000,0,2022-01-01,9999-01-01,,1 years,11,FALSE,Fixed Asset: Movables with linear deprecation over 10 years
+Revenues,OperationalCF,ORC0001,long,CHF,1000000,0,2022-01-01,9999-01-01,10,1 years,11,FALSE,Commissions earned by bank with account management
+Revenues,OperationalCF,ORR0001,long,CHF,425000,0,2022-01-01,9999-01-01,50,1 years,51,TRUE,Rent for Real Estate 1 for annualized 5% their current value
+Revenues,OperationalCF,ORR0002,long,CHF,175000,0,2022-01-01,9999-01-01,50,1 years,51,TRUE,Rent for Real Estate 2 for annualized 5% their current value
+Revenues,OperationalCF,ORR0003,long,CHF,300000,0,2022-01-01,9999-01-01,50,1 years,51,TRUE,Rent for Real Estate 3 for annualized 5% their current value
+Expenses,OperationalCF,OES0001,short,CHF,2000000,0,2022-01-01,9999-01-01,10,1 years,11,FALSE,Yearly personnel expenses
+Expenses,OperationalCF,OER0001,short,CHF,1200000,0,2022-01-01,9999-01-01,10,1 years,11,FALSE,Yearly rent expenses

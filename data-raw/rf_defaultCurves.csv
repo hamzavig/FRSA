@@ -1,0 +1,4 @@
+rfType,label,referenceDate,tenor.1,rate.1,tenor.2,rate.2,tenor.3,rate.3,tenor.4,rate.4,tenor.5,rate.5,tenor.6,rate.6,tenor.7,rate.7
+DefaultCurve,DC_EcoSec_H,2019-01-01,1Y,0,2Y,0,5Y,0,7Y,0.05,10Y,0.15,15Y,0.3,20Y,0.05
+DefaultCurve,DC_EcoSec_M,2019-01-01,1Y,0,2Y,0,5Y,0,7Y,0.025,10Y,0.075,15Y,0.15,20Y,0.025
+DefaultCurve,DC_EcoSec_L,2019-01-01,1Y,0,2Y,0,5Y,0,7Y,0.01,10Y,0.01,15Y,0.03,20Y,0
